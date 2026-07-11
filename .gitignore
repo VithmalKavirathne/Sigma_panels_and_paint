@@ -51,3 +51,6 @@ screenshots/
 setup-db.php
 # Development-only public test files
 public/db-test.php
+
+# Development-only public test files
+public/db-test.php
