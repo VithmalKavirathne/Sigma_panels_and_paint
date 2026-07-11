@@ -1,0 +1,51 @@
+# Secrets / local config
+includes/config.php
+.env
+*.env
+*.ini
+
+# Backups / temp
+*.bak
+*.backup
+*.log
+*.tmp
+*.claude-backup
+Pasted text*.txt
+
+# Local scripts
+run-source-8088.bat
+build-hostinger-package.ps1
+*.ps1
+*.bat
+
+# Test dependencies/reports
+node_modules/
+tests/node_modules/
+tests/playwright-report/
+tests/test-results/
+test-results/
+playwright-report/
+
+# Generated screenshots
+tests/screenshots/*.png
+tests/screenshots/*.jpg
+tests/screenshots/*.jpeg
+tests/screenshots/*.webp
+
+# Design/reference/dev folders
+stitch_sigma_digital_showroom/
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Do not deploy dev/reference folders
+tests/
+docs/
+references/
+screenshots/
+
+# Setup/dev scripts
+setup-db.php
