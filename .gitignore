@@ -49,3 +49,5 @@ screenshots/
 
 # Setup/dev scripts
 setup-db.php
+# Development-only public test files
+public/db-test.php
