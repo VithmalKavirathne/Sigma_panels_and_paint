@@ -1,0 +1,253 @@
+/*
+ * Sigma Panels & Paint - Admin Stylesheet
+ * Phase 5 CSS.
+ */
+
+:root {
+    --bg-main: #F6F4F1;
+    --sidebar-bg: #111111;
+    --card-bg: #FFFFFF;
+    --text-primary: #171717;
+    --text-muted: #66625E;
+    --accent-coral: #F95C4B;
+    --border-color: #D8D2C8;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-main); color: var(--text-primary); }
+
+/* Login Page */
+.login-body { display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--sidebar-bg); }
+.login-container { width: 100%; max-width: 400px; padding: 20px; }
+.login-card { background: var(--card-bg); padding: 30px; border-radius: 8px; box-shadow: var(--shadow); }
+.login-header { text-align: center; margin-bottom: 25px; }
+.login-header h2 { font-size: 24px; color: var(--sidebar-bg); }
+.login-header p { color: var(--text-muted); }
+
+/* Forms */
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; }
+.form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 16px; font-family: inherit; background: #fff; color: var(--text-primary); }
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--accent-coral); box-shadow: 0 0 0 3px rgba(249,92,75,0.12); }
+
+/* Buttons */
+.btn { display: inline-block; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; text-decoration: none; text-align: center; font-weight: 600; }
+.btn-primary { background: var(--accent-coral); color: #fff; }
+.btn-primary:hover { opacity: 0.9; }
+.btn-block { display: block; width: 100%; }
+
+/* Alerts */
+.alert { padding: 12px; border-radius: 4px; margin-bottom: 20px; }
+.alert-error { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+.alert-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+
+/* Admin Layout */
+.admin-wrapper { display: flex; min-height: 100vh; }
+.admin-sidebar { width: 250px; background: var(--sidebar-bg); color: #fff; flex-shrink: 0; }
+.sidebar-header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sidebar-header h2 { font-size: 18px; font-weight: 600; }
+.sidebar-nav ul { list-style: none; padding: 15px 0; }
+.sidebar-nav a { display: block; padding: 12px 20px; color: #ccc; text-decoration: none; transition: 0.2s; border-left: 4px solid transparent; }
+.sidebar-nav a:hover, .sidebar-nav a.active { background: rgba(255,255,255,0.05); color: var(--accent-coral); border-left: 4px solid var(--accent-coral); }
+.logout-btn { color: #ff8a80 !important; }
+
+.admin-main-content { flex: 1; display: flex; flex-direction: column; overflow-x: hidden; }
+.admin-topbar { background: var(--card-bg); padding: 15px 30px; display: flex; justify-content: flex-end; border-bottom: 1px solid var(--border-color); }
+.admin-content-area { padding: 30px; flex: 1; }
+
+.page-header { margin-bottom: 30px; }
+.page-header h1 { font-size: 28px; margin-bottom: 5px; }
+.page-header p { color: var(--text-muted); }
+
+/* Dashboard Cards */
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+.dashboard-card { background: var(--card-bg); padding: 25px; border-radius: 8px; box-shadow: var(--shadow); border: 1px solid var(--border-color); }
+.card-title { color: var(--text-muted); font-size: 14px; font-weight: 600; text-transform: uppercase; margin-bottom: 10px; }
+.card-value { font-size: 36px; font-weight: 700; color: var(--sidebar-bg); }
+.highlight-coral { color: var(--accent-coral); }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .admin-wrapper { flex-direction: column; }
+    .admin-sidebar { width: 100%; }
+    .sidebar-nav ul { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px 12px; }
+    .sidebar-nav a { padding: 8px 12px; }
+    .sidebar-nav a:hover, .sidebar-nav a.active { border-left: none; border-bottom: 3px solid var(--accent-coral); }
+}
+
+/* Phase 6 Extensions: Tables, Badges, Action Buttons */
+.table-responsive { overflow-x: auto; margin-bottom: 20px; }
+table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: var(--shadow); }
+th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+th { background: #f9f9f9; font-weight: 600; color: var(--text-muted); }
+tr:last-child td { border-bottom: none; }
+tr:hover { background: #fdfdfd; }
+
+.badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; display: inline-block; }
+.badge-success { background: #e8f5e9; color: #2e7d32; }
+.badge-secondary { background: #f5f5f5; color: #757575; }
+
+.action-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn-sm { padding: 6px 12px; font-size: 14px; }
+.btn-danger { background: #d32f2f; color: white; }
+.btn-danger:hover { background: #b71c1c; }
+.btn-secondary { background: #757575; color: white; }
+.btn-secondary:hover { background: #616161; }
+
+/* Phase 7 Extensions: Table Thumbnails */
+.thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color); display: block; }
+.thumb-empty { display: flex; align-items: center; justify-content: center; width: 60px; height: 60px; font-size: 11px; color: var(--text-muted); background: #f5f5f5; text-align: center; }
+
+/* ============================================================
+   Phase 15C - Admin visual polish (CSS only)
+   ============================================================ */
+.form-group textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
+.form-group select {
+    appearance: none; -webkit-appearance: none; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2366625E' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
+}
+.form-group input[type="file"] { padding: 8px; background: #faf9f7; cursor: pointer; }
+.form-group input[type="checkbox"] { width: auto; margin-right: 6px; vertical-align: middle; box-shadow: none; }
+.form-group input[type="color"] { padding: 4px; height: 42px; }
+
+/* Card rhythm + section titles used by settings/dashboard hubs */
+.dashboard-card + .dashboard-card { margin-top: 20px; }
+.dashboard-card h2 { font-size: 18px; margin-bottom: 12px; }
+
+/* Tables: keep readable columns; scroll horizontally inside the wrapper */
+.table-responsive { border-radius: 8px; }
+.table-responsive table { min-width: 640px; }
+td small { color: var(--text-muted); }
+.action-buttons .btn-sm { white-space: nowrap; }
+
+/* Login: give the card breathing room on small screens */
+.login-body { min-height: 100vh; height: auto; padding: 20px; }
+
+@media (max-width: 768px) {
+    .admin-content-area { padding: 20px 16px; }
+    .admin-topbar { padding: 12px 16px; }
+    .dashboard-card { padding: 20px 16px; }
+    .card-value { font-size: 30px; }
+    /* Stack the flex "title + Add New" page headers */
+    .page-header[style] { flex-direction: column !important; align-items: flex-start !important; gap: 12px; }
+    /* Collapse inline two-column form rows to a single column */
+    .dashboard-card [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+}
+
+/* ============================================================
+   Admin cleanup pass - consistency polish (CSS only)
+   ============================================================ */
+body { -webkit-font-smoothing: antialiased; }
+
+/* Buttons: subtle interaction feedback, consistent everywhere */
+.btn { transition: background 0.2s ease, opacity 0.2s ease, transform 0.1s ease; }
+.btn:active { transform: translateY(1px); }
+
+/* Topbar welcome text */
+.admin-topbar .topbar-user span { font-weight: 600; color: var(--text-muted); font-size: 14px; }
+
+/* Logout: a quiet separator so it reads as a distinct action */
+.logout-btn { margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.08); }
+
+/* Cards: consistent vertical rhythm */
+.dashboard-card { margin-bottom: 20px; }
+.dashboard-card:last-child { margin-bottom: 0; }
+
+/* Alerts: a touch more presence, still calm */
+.alert { font-size: 14px; font-weight: 600; border-radius: 6px; }
+
+/* Login: premium coral accent + tidy header */
+.login-card { border-top: 4px solid var(--accent-coral); }
+.login-header h2 { letter-spacing: 0.02em; }
+
+/* Detail tables (business summary, quote/message view) stay fluid & readable */
+.dashboard-card > table th { width: 200px; }
+.dashboard-card > table td { word-break: break-word; }
+
+/* ============================================================
+   Dashboard content (quick actions, recent panels, checklist)
+   ============================================================ */
+.dashboard-grid .stat-card { border-top: 3px solid var(--accent-coral); }
+
+.dash-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+.dash-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.dash-panel-head h2 { margin-bottom: 0; }
+
+.quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.quick-action {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 16px; border: 1px solid var(--border-color); border-radius: 8px;
+    background: #fff; color: var(--text-primary); text-decoration: none; font-weight: 600; font-size: 14px;
+    transition: border-color 0.2s ease, transform 0.1s ease, color 0.2s ease;
+}
+.quick-action:hover { border-color: var(--accent-coral); color: var(--accent-coral); }
+.quick-action:active { transform: translateY(1px); }
+.qa-symbol {
+    width: 34px; height: 34px; flex-shrink: 0; border-radius: 8px;
+    background: #fceae7; color: var(--accent-coral);
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+}
+
+.recent-list { display: flex; flex-direction: column; }
+.recent-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
+.recent-row:last-child { border-bottom: none; }
+.recent-sub { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
+
+.empty-state { text-align: center; color: var(--text-muted); padding: 28px 12px; font-size: 14px; }
+
+.checklist { display: flex; flex-direction: column; }
+.checklist-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+.checklist-row:last-child { border-bottom: none; }
+.checklist-row > span:nth-child(2) { flex: 1; }
+.check-icon { width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+.check-icon.is-done { background: #e8f5e9; color: #2e7d32; }
+.check-icon.is-pending { background: #f5f5f5; color: #9e9e9e; }
+
+@media (max-width: 768px) {
+    .dash-2col { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   Admin alignment audit - constrain content width + fixed grids
+   (stops edge-to-edge stretch / "zoomed out" feel on wide screens)
+   ============================================================ */
+.admin-content-area { max-width: 1280px; margin: 0 auto; width: 100%; }
+
+.dashboard-grid { grid-template-columns: repeat(4, 1fr); }
+.quick-actions { grid-template-columns: repeat(3, 1fr); }
+
+@media (max-width: 1024px) {
+    .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+    .quick-actions  { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .quick-actions  { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   Global admin alignment cleanup
+   ============================================================ */
+/* Forms: comfortable field width inside full-width cards (card edges still
+   align with the page header; only the inputs are constrained) */
+.dashboard-card > form { max-width: 780px; }
+
+/* List tables: tighter cells, compact thumb + action columns, roomy title col */
+.table-responsive table th,
+.table-responsive table td { padding: 12px 14px; }
+.table-responsive table td:last-child,
+.table-responsive table th:last-child { width: 1%; white-space: nowrap; }
+.table-responsive table td:last-child .action-buttons { flex-wrap: nowrap; justify-content: flex-start; }
+.table-responsive table td:has(.thumb),
+.table-responsive table th:has(.thumb) { width: 1%; }
+
+/* Dashboard final tuning */
+.dashboard-grid .stat-card { min-height: 120px; display: flex; flex-direction: column; justify-content: center; }
+.quick-action { min-height: 64px; }
+
+@media (max-width: 768px) {
+    .table-responsive table td:last-child .action-buttons { flex-wrap: wrap; }
+}

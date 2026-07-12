@@ -1,0 +1,56 @@
+# =====================================================================
+# Sigma Panels & Paint - Git deployment ignore rules
+# This repo IS the public_html web root that Hostinger pulls in.
+# =====================================================================
+
+# --- Secrets: real config lives OUTSIDE public_html, never in Git ---
+sigma_private/
+includes/config.local.php
+.env
+*.env
+*.ini
+
+# --- Backups / temp / logs ---
+*.bak
+*.backup
+*.log
+*.tmp
+*.claude-backup
+Pasted text*.txt
+
+# --- Local dev / build scripts ---
+*.ps1
+*.bat
+router.php
+
+# --- Dependencies / test artifacts ---
+node_modules/
+tests/
+test-results/
+playwright-report/
+**/test-results/
+**/playwright-report/
+
+# --- Dev / reference folders (never deployed) ---
+database/
+docs/
+references/
+screenshots/
+stitch_sigma_digital_showroom/
+.vscode/
+.idea/
+
+# --- Dev-only files ---
+public/db-test.php
+setup-db.php
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+
+# --- Uploaded content: keep folders, never commit real uploads ---
+uploads/*
+!uploads/.htaccess
+!uploads/index.html
+!uploads/*/
+!uploads/*/.gitkeep

@@ -1,0 +1,48 @@
+# Sigma Panels & Paint - clean URL routing + security
+Options -Indexes
+RewriteEngine On
+
+# Never rewrite real files or directories (assets, uploads, and existing
+# .php files like /public/about.php and /admin/login.php keep working).
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# ---- Public clean routes ----
+RewriteRule ^$                      public/index.php          [L]
+RewriteRule ^home/?$                public/index.php          [L]
+RewriteRule ^about/?$               public/about.php          [L]
+RewriteRule ^services/?$            public/services.php       [L]
+RewriteRule ^gallery/?$             public/gallery.php        [L]
+RewriteRule ^quote/?$               public/quote.php          [QSA,L]
+RewriteRule ^contact/?$             public/contact.php        [QSA,L]
+RewriteRule ^faq/?$                 public/faq.php            [L]
+RewriteRule ^privacy-policy/?$      public/privacy-policy.php [L]
+RewriteRule ^terms/?$               public/terms.php          [L]
+RewriteRule ^sitemap\.xml$          public/sitemap.php        [L]
+RewriteRule ^robots\.txt$           public/robots.php         [L]
+RewriteRule ^service/([A-Za-z0-9_-]+)/?$ public/service.php?slug=$1 [QSA,L]
+
+# ---- Admin clean routes ----
+RewriteRule ^admin/?$               admin/dashboard.php       [L]
+RewriteRule ^admin/login/?$         admin/login.php           [QSA,L]
+RewriteRule ^admin/logout/?$        admin/logout.php          [L]
+RewriteRule ^admin/dashboard/?$     admin/dashboard.php       [QSA,L]
+RewriteRule ^admin/business-info/?$ admin/business-info.php   [QSA,L]
+RewriteRule ^admin/homepage/?$      admin/homepage.php        [QSA,L]
+RewriteRule ^admin/about-basic/?$   admin/about-basic.php     [QSA,L]
+RewriteRule ^admin/services/?$      admin/services.php        [QSA,L]
+RewriteRule ^admin/gallery/?$       admin/gallery.php         [QSA,L]
+RewriteRule ^admin/quote-requests/?$ admin/quote-requests.php [QSA,L]
+RewriteRule ^admin/messages/?$      admin/messages.php        [QSA,L]
+RewriteRule ^admin/seo-basic/?$     admin/seo-basic.php       [QSA,L]
+RewriteRule ^admin/settings-basic/?$ admin/settings-basic.php [QSA,L]
+RewriteRule ^admin/faqs/?$          admin/faqs.php            [QSA,L]
+
+# ---- Security ----
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+<FilesMatch "\.(sql|bak|backup|log|env|ini|sh|bat|ps1|md)$">
+    Require all denied
+</FilesMatch>
