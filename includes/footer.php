@@ -70,5 +70,12 @@ $brandName = $settings['business_name'] ?? SITE_NAME;
 <script src="<?= e(asset('assets/js/public.js')) ?>"></script>
 <script src="<?= e(asset('assets/js/home-animations.js')) ?>"></script>
 <script src="<?= e(asset('assets/js/form-validation.js')) ?>"></script>
+
+<!-- Motion foundation (public pages only): GSAP + ScrollTrigger + Lenis.
+     Loaded after core scripts; motion-init.js fails safe if any are missing. -->
+<script src="<?= e(asset('assets/vendor/gsap/gsap.min.js')) ?>" defer></script>
+<script src="<?= e(asset('assets/vendor/gsap/ScrollTrigger.min.js')) ?>" defer></script>
+<script src="<?= e(asset('assets/vendor/lenis/lenis.min.js')) ?>" defer></script>
+<script src="<?= e(asset('assets/js/motion-init.js')) ?>" defer></script>
 </body>
 </html>

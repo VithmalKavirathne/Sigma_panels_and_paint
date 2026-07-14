@@ -40,8 +40,6 @@ $heroBody = $hero['content'] ?? 'Panel beating, spray painting, insurance repair
 
 <!-- ===================== PREMIUM HERO ===================== -->
 <?php
-$heroCarFile = 'assets/images/home/hero-painted-car.webp';
-$hasHeroCar  = is_file(dirname(__DIR__) . '/' . $heroCarFile);
 $luxTitle = $heroTitle ?: 'Precision is our starting line';
 $luxBody  = $heroBody ?: 'Sigma Panels & Paint delivers flawless repairs with factory precision and a finish that exceeds expectations.';
 ?>
@@ -63,31 +61,28 @@ $luxBody  = $heroBody ?: 'Sigma Panels & Paint delivers flawless repairs with fa
         <div class="lux-hero-visual" data-reveal="fade">
             <div class="lux-ghost" aria-hidden="true"><span>CRAFTED</span></div>
             <div class="lux-car-stage">
-                <?php if ($hasHeroCar): ?>
-                    <img class="ref-car-image" src="<?= e(asset($heroCarFile)) ?>" alt="Premium vehicle refinished by Sigma Panels &amp; Paint">
-                <?php else: ?>
-                    <svg class="ref-car-svg" viewBox="0 0 760 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Premium sports car finished by Sigma Panels &amp; Paint">
-                        <defs>
-                            <linearGradient id="refBody" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0" stop-color="#eeeae3"/><stop offset="0.45" stop-color="#d3cfc7"/><stop offset="1" stop-color="#a7a39b"/>
-                            </linearGradient>
-                            <linearGradient id="refGlass" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0" stop-color="#3c3e42"/><stop offset="1" stop-color="#17181a"/>
-                            </linearGradient>
-                            <radialGradient id="refShadow" cx="0.5" cy="0.5" r="0.5">
-                                <stop offset="0" stop-color="rgba(0,0,0,0.30)"/><stop offset="1" stop-color="rgba(0,0,0,0)"/>
-                            </radialGradient>
-                        </defs>
-                        <ellipse cx="380" cy="300" rx="330" ry="30" fill="url(#refShadow)"/>
-                        <path d="M60,250 C74,214 140,204 205,202 L280,200 C330,166 415,152 505,160 C580,166 646,186 700,220 C726,234 726,250 700,256 L120,256 C92,256 66,258 60,250 Z" fill="url(#refBody)"/>
-                        <path d="M280,200 C330,166 415,152 505,160 C556,165 598,178 628,198 L600,204 C556,184 505,176 452,176 C388,176 322,186 296,204 Z" fill="#c4c0b8"/>
-                        <path d="M300,200 C338,172 404,166 476,172 C516,175 546,186 568,200 Z" fill="url(#refGlass)"/>
-                        <path d="M120,232 C280,224 520,224 690,232" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
-                        <path d="M690,214 C704,218 716,226 710,236 L690,236 Z" fill="#2a2a2a"/>
-                        <circle cx="222" cy="252" r="50" fill="#141414"/><circle cx="222" cy="252" r="27" fill="#2c2c2c"/><circle cx="222" cy="252" r="9" fill="#F95C4B"/>
-                        <circle cx="576" cy="252" r="50" fill="#141414"/><circle cx="576" cy="252" r="27" fill="#2c2c2c"/><circle cx="576" cy="252" r="9" fill="#F95C4B"/>
-                    </svg>
-                <?php endif; ?>
+                <div class="real-car-reveal" data-real-car>
+                    <img
+                        class="real-car-painted"
+                        src="<?= e(asset('assets/images/home/hero-car-painted.webp')) ?>"
+                        width="1024"
+                        height="768"
+                        alt="Professionally refinished vehicle">
+                    <img
+                        class="real-car-primer"
+                        src="<?= e(asset('assets/images/home/hero-car-primer.webp')) ?>"
+                        width="1024"
+                        height="768"
+                        alt=""
+                        aria-hidden="true">
+                    <div class="real-car-gloss" aria-hidden="true"></div>
+                </div>
+            </div>
+            <div class="paint-stages" aria-hidden="true">
+                <span data-stage="prep" class="active">Prep</span>
+                <span data-stage="paint">Paint</span>
+                <span data-stage="clear">Clear Coat</span>
+                <span data-stage="finish">Finish</span>
             </div>
 
             <div class="lux-feature-card" data-reveal="fade">
@@ -142,6 +137,68 @@ $luxBody  = $heroBody ?: 'Sigma Panels & Paint delivers flawless repairs with fa
         </a>
     </div>
 </div>
+
+<!-- ===================== PAINT-BOOTH SEQUENCE (Phase 5) ===================== -->
+<?php
+// Single-sourced booth-car geometry, rendered as an aligned primer + paint pair.
+$pbGeo =
+    '<path d="M60,250 C74,214 140,204 205,202 L280,200 C330,166 415,152 505,160 C580,166 646,186 700,220 C726,234 726,250 700,256 L120,256 C92,256 66,258 60,250 Z" fill="url(#%P%Body)"/>'
+  . '<path d="M280,200 C330,166 415,152 505,160 C556,165 598,178 628,198 L600,204 C556,184 505,176 452,176 C388,176 322,186 296,204 Z" fill="%UB%"/>'
+  . '<path d="M300,200 C338,172 404,166 476,172 C516,175 546,186 568,200 Z" fill="url(#%P%Glass)"/>'
+  . '<path d="M120,232 C280,224 520,224 690,232" fill="none" stroke="%HL%" stroke-width="2"/>'
+  . '<path d="M690,214 C704,218 716,226 710,236 L690,236 Z" fill="#26262a"/>'
+  . '<circle cx="222" cy="252" r="46" fill="#121316"/><circle cx="222" cy="252" r="25" fill="#2c2e33"/><circle cx="222" cy="252" r="8" fill="%A%"/>'
+  . '<circle cx="576" cy="252" r="46" fill="#121316"/><circle cx="576" cy="252" r="25" fill="#2c2e33"/><circle cx="576" cy="252" r="8" fill="%A%"/>';
+$pbSvgOpen = '<svg viewBox="0 0 760 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vehicle in the Sigma paint booth">';
+$pbPrimer = $pbSvgOpen
+  . '<defs><linearGradient id="pbrBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c7c4bd"/><stop offset="0.5" stop-color="#adaaa2"/><stop offset="1" stop-color="#8f8c85"/></linearGradient>'
+  . '<linearGradient id="pbrGlass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b7b4ac"/><stop offset="1" stop-color="#97948c"/></linearGradient></defs>'
+  . str_replace(['%P%','%UB%','%HL%','%A%'], ['pbr','#b6b3ab','rgba(255,255,255,0.35)','#8b8b8b'], $pbGeo) . '</svg>';
+$pbPaint = $pbSvgOpen
+  . '<defs><linearGradient id="pbpBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#565b64"/><stop offset="0.45" stop-color="#333841"/><stop offset="1" stop-color="#1b1e24"/></linearGradient>'
+  . '<linearGradient id="pbpGlass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3c3e42"/><stop offset="1" stop-color="#161719"/></linearGradient></defs>'
+  . str_replace(['%P%','%UB%','%HL%','%A%'], ['pbp','#2b2f36','rgba(255,255,255,0.28)','#F95C4B'], $pbGeo) . '</svg>';
+?>
+<section class="paint-booth-section" id="paint-process">
+    <div class="pb-head">
+        <span class="pb-eyebrow">The Sigma Finish</span>
+        <h2 class="pb-heading">Precision in Every Layer</h2>
+        <p class="pb-sub">From preparation and colour matching to clear coat and final polish, every stage is controlled for a clean, durable finish.</p>
+    </div>
+
+    <div class="pb-stage-wrap">
+        <div class="pb-stage" aria-hidden="true">
+            <div class="pb-wall"></div>
+            <div class="pb-lights"><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="pb-floor"></div>
+
+            <div class="pb-car">
+                <div class="pb-car-layer pb-primer"><?= $pbPrimer ?></div>
+                <div class="pb-car-layer pb-paint"><?= $pbPaint ?></div>
+                <div class="pb-tape">
+                    <i style="left:39%;top:50%;width:36%;height:9%;transform:rotate(-2deg)"></i>
+                    <i style="left:22%;top:62%;width:15%;height:26%;border-radius:42%"></i>
+                    <i style="left:68%;top:62%;width:15%;height:26%;border-radius:42%"></i>
+                    <i style="left:12%;top:73%;width:64%;height:3%"></i>
+                </div>
+                <div class="pb-gloss"><i></i></div>
+            </div>
+
+            <div class="pb-mist">
+                <?php for ($i = 0; $i < 20; $i++): $t = 36 + (($i * 7) % 26); ?><i style="top:<?= $t ?>%"></i><?php endfor; ?>
+            </div>
+        </div>
+
+        <div class="pb-stages" aria-hidden="true">
+            <span data-pbstage="prep" class="active">Prep</span>
+            <span data-pbstage="mask">Mask</span>
+            <span data-pbstage="spray">Spray</span>
+            <span data-pbstage="colour">Colour</span>
+            <span data-pbstage="clear">Clear Coat</span>
+            <span data-pbstage="finish">Finish</span>
+        </div>
+    </div>
+</section>
 
 <?php if (!empty($storyBlocks)): ?>
 <!-- ===================== STORY / CRAFT SECTIONS ===================== -->

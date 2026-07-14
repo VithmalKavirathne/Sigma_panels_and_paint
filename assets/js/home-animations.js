@@ -1,257 +1,284 @@
 /*
  * Sigma Panels & Paint - Homepage Animations
- * Phase 12 - paint-booth hero: ambient particles, cursor-reactive mist,
- * layered parallax, and a custom spray-gun cursor that emits nozzle spray.
- * CSS/JS only (no WebGL/Three.js/libraries). All motion respects
- * prefers-reduced-motion and is disabled on touch / <769px. Effect layers
- * are pointer-events:none so links/buttons are never blocked.
+ * Final animation set (cleanup pass):
+ *   1. Hero primer -> painted reveal + one clear-coat gloss sweep (scrubbed).
+ *   2. Scroll-driven paint-booth sequence (#paint-process).
+ *
+ * All GSAP/ScrollTrigger work rides the shared foundation (motion-init.js);
+ * everything respects prefers-reduced-motion and stays light on mobile.
+ * Removed in cleanup: dormant paint-gun/particle/parallax code, the playable
+ * paint-booth demo, the desktop spray-gun cursor, and the inspection-scan.
  */
+
+/* ------------------------------------------------------------------
+ * 1. Hero primer -> painted reveal + one clear-coat gloss sweep.
+ *    One scrubbed ScrollTrigger (desktop) / one play-once timeline (mobile).
+ *    Fails safe to a finished car if the libraries are unavailable.
+ * ------------------------------------------------------------------ */
 (function () {
     'use strict';
 
     document.addEventListener('DOMContentLoaded', function () {
-        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        var finePointer = window.matchMedia('(min-width: 769px)').matches;
-        var hero = document.getElementById('hero');
+        var reveal = document.querySelector('.real-car-reveal[data-real-car]');
+        if (!reveal) { return; }
 
-        // Reveal safety-net for the hero.
-        setTimeout(function () {
-            document.querySelectorAll('.hero [data-reveal]').forEach(function (el) {
-                el.classList.add('revealed');
-            });
-        }, 400);
+        var stagesWrap = document.querySelector('.paint-stages');
+        var gloss      = reveal.querySelector('.real-car-gloss');
 
-        if (reduce || !hero) { return; }
+        var hasGsap = typeof window.gsap !== 'undefined';
+        var hasST   = hasGsap && typeof window.ScrollTrigger !== 'undefined';
+        var reduce  = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var mobile  = window.matchMedia('(max-width: 767px)').matches;
 
-        /* ---- Ambient drifting particles ---- */
-        var pc = document.getElementById('paint-particles');
-        if (pc) {
-            var count = 18;
-            for (var i = 0; i < count; i++) {
-                var s = document.createElement('span');
-                var scale = 0.5 + Math.random() * 1.2;
-                s.style.left = (Math.random() * 100) + '%';
-                s.style.width = (7 * scale).toFixed(1) + 'px';
-                s.style.height = (7 * scale).toFixed(1) + 'px';
-                s.style.setProperty('--dur', (12 + Math.random() * 10).toFixed(1) + 's');
-                s.style.setProperty('--delay', (Math.random() * 12).toFixed(1) + 's');
-                s.style.setProperty('--drift', (Math.random() * 80 - 40).toFixed(0) + 'px');
-                pc.appendChild(s);
+        function setPaint(v) { reveal.style.setProperty('--paint', v); }
+        function setSweep(v) { if (gloss) { gloss.style.setProperty('--sweep', v); } }
+
+        function setStage(name) {
+            if (!stagesWrap) { return; }
+            var spans = stagesWrap.querySelectorAll('span');
+            for (var i = 0; i < spans.length; i++) {
+                spans[i].classList.toggle('active', spans[i].getAttribute('data-stage') === name);
             }
         }
 
-        if (!finePointer) { return; }
-
-        /* ---- Cursor-reactive mist + layered parallax ---- */
-        var mist = document.getElementById('paint-mist');
-        var parallaxEls = hero.querySelectorAll('[data-parallax]');
-        var ticking = false, lastX = 0, lastY = 0;
-
-        hero.addEventListener('mousemove', function (e) {
-            lastX = e.clientX;
-            lastY = e.clientY;
-            if (ticking) { return; }
-            ticking = true;
-            requestAnimationFrame(function () {
-                ticking = false;
-                var rect = hero.getBoundingClientRect();
-                var relX = ((lastX - rect.left) / rect.width) - 0.5;
-                var relY = ((lastY - rect.top) / rect.height) - 0.5;
-                if (mist) {
-                    var vr = mist.getBoundingClientRect();
-                    var vx = ((lastX - vr.left) / vr.width) * 100;
-                    var vy = ((lastY - vr.top) / vr.height) * 100;
-                    mist.style.setProperty('--mx', Math.max(-20, Math.min(120, vx)) + '%');
-                    mist.style.setProperty('--my', Math.max(-20, Math.min(120, vy)) + '%');
-                }
-                for (var j = 0; j < parallaxEls.length; j++) {
-                    var f = parseFloat(parallaxEls[j].getAttribute('data-parallax')) || 0;
-                    parallaxEls[j].style.translate = (relX * f * 100).toFixed(1) + 'px ' + (relY * f * 100).toFixed(1) + 'px';
-                }
-            });
-        });
-
-        hero.addEventListener('mouseleave', function () {
-            for (var k = 0; k < parallaxEls.length; k++) {
-                parallaxEls[k].style.translate = '0px 0px';
-            }
-        });
-
-        /* ---- Custom spray-gun cursor + nozzle spray ---- */
-        var gun = document.getElementById('paintGun');
-        var sprayLayer = document.getElementById('sprayLayer');
-        if (gun) {
-            var ANGLE = -8;                       // gun tilt: points right, slightly up toward the car
-            var RAD = ANGLE * Math.PI / 180;
-            var NOZZLE = 28;                      // nozzle-tip distance from gun centre
-            var gx = 0, gy = 0, tgx = 0, tgy = 0; // current + target positions (relative to hero)
-            var gunRaf = null, gunVisible = false, havePos = false, lastSpray = 0;
-
-            function overInteractive(t) {
-                return !!(t && t.closest && t.closest('a, button, input, select, textarea'));
-            }
-
-            function follow() {
-                gx += (tgx - gx) * 0.22;
-                gy += (tgy - gy) * 0.22;
-                gun.style.transform = 'translate(' + gx.toFixed(1) + 'px,' + gy.toFixed(1) + 'px) translate(-50%,-50%) rotate(' + ANGLE + 'deg)';
-                if (Math.abs(tgx - gx) > 0.4 || Math.abs(tgy - gy) > 0.4) {
-                    gunRaf = requestAnimationFrame(follow);
-                } else {
-                    gunRaf = null;
+        // Deterministic stage mapping with hysteresis (no boundary flicker).
+        var STAGE_BANDS = [
+            { name: 'prep',   lo: 0.00, hi: 0.10 },
+            { name: 'paint',  lo: 0.10, hi: 0.70 },
+            { name: 'clear',  lo: 0.70, hi: 0.90 },
+            { name: 'finish', lo: 0.90, hi: 1.01 }
+        ];
+        var STAGE_HYST = 0.02;
+        var currentStage = null;
+        function resolveStage(p) {
+            if (currentStage) {
+                for (var i = 0; i < STAGE_BANDS.length; i++) {
+                    if (STAGE_BANDS[i].name === currentStage) {
+                        if (p >= STAGE_BANDS[i].lo - STAGE_HYST && p < STAGE_BANDS[i].hi + STAGE_HYST) { return currentStage; }
+                        break;
+                    }
                 }
             }
-
-            function emit() {
-                if (!sprayLayer || sprayLayer.childElementCount > 50) { return; }
-                var nx = gx + Math.cos(RAD) * NOZZLE;
-                var ny = gy + Math.sin(RAD) * NOZZLE;
-                for (var n = 0; n < 2; n++) {
-                    var p = document.createElement('span');
-                    var dir = RAD + (Math.random() - 0.5) * 0.65;   // cone spread
-                    var dist = 50 + Math.random() * 95;
-                    var sz = (3 + Math.random() * 5).toFixed(1);
-                    p.style.left = nx.toFixed(1) + 'px';
-                    p.style.top = ny.toFixed(1) + 'px';
-                    p.style.width = sz + 'px';
-                    p.style.height = sz + 'px';
-                    p.style.setProperty('--tx', (Math.cos(dir) * dist).toFixed(1) + 'px');
-                    p.style.setProperty('--ty', (Math.sin(dir) * dist).toFixed(1) + 'px');
-                    p.style.animationDuration = (0.6 + Math.random() * 0.3).toFixed(2) + 's';
-                    p.addEventListener('animationend', function () { this.remove(); });
-                    sprayLayer.appendChild(p);
-                }
+            for (var j = 0; j < STAGE_BANDS.length; j++) {
+                if (p >= STAGE_BANDS[j].lo && p < STAGE_BANDS[j].hi) { currentStage = STAGE_BANDS[j].name; return currentStage; }
             }
+            currentStage = p < 0.5 ? 'prep' : 'finish';
+            return currentStage;
+        }
 
-            hero.addEventListener('mouseenter', function () {
-                hero.classList.add('paint-cursor-active');
+        // Fallback (no libraries) or reduced motion: leave the CSS default -
+        // the finished painted photo is shown (no .rc-anim, no mask, no ScrollTrigger).
+        if (!hasGsap || !hasST || reduce) {
+            setStage('finish');
+            return;
+        }
+
+        // Engage the masked reveal: PREP starts on the primer photo.
+        reveal.classList.add('rc-anim');
+        setPaint(0);
+        setSweep(-60);
+
+        var state = { paint: 0 };
+        var sweep = { v: -60 };
+
+        if (mobile) {
+            // Short auto-play on enter; no scrub, no pin.
+            var mtl = window.gsap.timeline({
+                paused: true,
+                onUpdate: function () { setStage(resolveStage(mtl.progress())); },
+                onComplete: function () { setStage('finish'); }
             });
+            // PREP -> PAINT (primer photo reveals to the painted photo)
+            mtl.to(state, { paint: 0, duration: 0.2, ease: 'none',
+                    onUpdate: function () { setPaint(state.paint); } })
+               .to(state, { paint: 1, duration: 1.2, ease: 'none',
+                    onUpdate: function () { setPaint(state.paint); } });
+            // CLEAR COAT - one gloss sweep clipped to the car silhouette
+            if (gloss) {
+                mtl.to(gloss, { opacity: 1, duration: 0.2, ease: 'power2.out' }, '>');
+                mtl.to(sweep, { v: 260, duration: 0.8, ease: 'power1.inOut',
+                        onUpdate: function () { setSweep(sweep.v); } }, '<');
+                mtl.to(gloss, { opacity: 0, duration: 0.28, ease: 'power2.in' }, '>-0.1');
+            } else {
+                mtl.to({}, { duration: 0.8 });
+            }
+            // FINISH - painted car settles forward ~8px
+            mtl.to(reveal, { x: -8, duration: 0.34, ease: 'power2.out' }, '>-0.1');
 
-            hero.addEventListener('mouseleave', function () {
-                hero.classList.remove('paint-cursor-active');
-                gun.style.opacity = '0';
-                gunVisible = false;
+            window.ScrollTrigger.create({
+                trigger: '#hero', start: 'top 80%', once: true,
+                onEnter: function () { mtl.play(); }
             });
-
-            hero.addEventListener('mousemove', function (e) {
-                var rect = hero.getBoundingClientRect();
-                tgx = e.clientX - rect.left;
-                tgy = e.clientY - rect.top;
-                if (!havePos) { gx = tgx; gy = tgy; havePos = true; }
-
-                if (overInteractive(e.target)) {
-                    // Over a link/button: hide the gun and let the normal pointer show.
-                    if (gunVisible) { gun.style.opacity = '0'; gunVisible = false; }
-                } else {
-                    if (!gunVisible) { gun.style.opacity = '1'; gunVisible = true; }
-                    var now = performance.now();
-                    if (now - lastSpray > 26) { lastSpray = now; emit(); }
+        } else {
+            // Desktop scrubbed timeline; no pinning. One ScrollTrigger.
+            var tl = window.gsap.timeline({
+                scrollTrigger: {
+                    trigger: '#hero',
+                    start: 'top top',
+                    end: '+=55%',
+                    scrub: 0.8,
+                    onUpdate: function (self) { setStage(resolveStage(self.progress())); }
                 }
-                if (!gunRaf) { follow(); }
             });
+
+            // PREP (0-1) - primer photo held
+            tl.to(state, { paint: 0, duration: 1, ease: 'none',
+                    onUpdate: function () { setPaint(state.paint); } });
+            // PAINT (1-7) - painted photo reveals front -> rear through the mask
+            tl.to(state, { paint: 1, duration: 6, ease: 'none',
+                    onUpdate: function () { setPaint(state.paint); } });
+            // CLEAR COAT (7-9) - one gloss sweep clipped to the car silhouette
+            if (gloss) {
+                tl.to(gloss, { opacity: 1, duration: 0.3, ease: 'power2.out' }, 7);
+                tl.to(sweep, { v: 260, duration: 1.8, ease: 'power1.inOut',
+                        onUpdate: function () { setSweep(sweep.v); } }, 7);
+                tl.to(gloss, { opacity: 0, duration: 0.4, ease: 'power2.in' }, 8.6);
+            } else {
+                tl.to({}, { duration: 2 });
+            }
+            // FINISH (9-10) - painted car settles forward ~8px
+            tl.to(reveal, { x: -8, duration: 1, ease: 'power2.out' }, 9);
         }
     });
 })();
 
-/*
- * Phase 17 - Playable paint-booth demo controller (self-contained).
- * Runs on all screen sizes; static "finished" fallback under reduced motion.
- */
+/* ------------------------------------------------------------------
+ * 2. Scroll-driven paint-booth sequence (#paint-process).
+ *    One GSAP timeline with one ScrollTrigger. Desktop pins briefly and
+ *    scrubs; mobile plays a short auto sequence on enter. Reduced motion /
+ *    no libraries: the finished booth state is shown with no ScrollTrigger.
+ * ------------------------------------------------------------------ */
 (function () {
     'use strict';
+
     document.addEventListener('DOMContentLoaded', function () {
-        var demo = document.getElementById('paintDemo');
-        if (!demo) { return; }
+        var section = document.getElementById('paint-process');
+        if (!section) { return; }
 
-        var playBtn    = document.getElementById('demoPlay');
-        var bar        = document.getElementById('demoBar');
-        var gun        = document.getElementById('demoGun');
-        var emit       = document.getElementById('demoSpray');
-        var revealRect = document.getElementById('revealRect');
-        var stages     = demo.querySelectorAll('.demo-stages span');
-        var CAR_W      = 400; // SVG viewBox width
-        var reduce     = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var stageEl    = section.querySelector('.pb-stage');
+        var car        = section.querySelector('.pb-car');
+        var floor      = section.querySelector('.pb-floor');
+        var glossBar   = section.querySelector('.pb-gloss i');
+        var stagesWrap = section.querySelector('.pb-stages');
+        var lights     = section.querySelectorAll('.pb-lights i');
+        var tapes      = section.querySelectorAll('.pb-tape i');
+        var mist       = section.querySelectorAll('.pb-mist i');
 
+        var hasGsap = typeof window.gsap !== 'undefined';
+        var hasST   = hasGsap && typeof window.ScrollTrigger !== 'undefined';
+        var reduce  = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var mobile  = window.matchMedia('(max-width: 767px)').matches;
+
+        function setPB(v) { if (car) { car.style.setProperty('--pb', v); } }
+
+        var ORDER = ['prep', 'mask', 'spray', 'colour', 'clear', 'finish'];
+        var BANDS = [
+            { n: 'prep',   lo: 0.00, hi: 0.25 },
+            { n: 'mask',   lo: 0.25, hi: 0.375 },
+            { n: 'spray',  lo: 0.375, hi: 0.54 },
+            { n: 'colour', lo: 0.54, hi: 0.75 },
+            { n: 'clear',  lo: 0.75, hi: 0.875 },
+            { n: 'finish', lo: 0.875, hi: 1.01 }
+        ];
+        var HY = 0.015, cur = null;
+        function resolve(p) {
+            if (cur) {
+                for (var i = 0; i < BANDS.length; i++) {
+                    if (BANDS[i].n === cur) {
+                        if (p >= BANDS[i].lo - HY && p < BANDS[i].hi + HY) { return cur; }
+                        break;
+                    }
+                }
+            }
+            for (var j = 0; j < BANDS.length; j++) {
+                if (p >= BANDS[j].lo && p < BANDS[j].hi) { cur = BANDS[j].n; return cur; }
+            }
+            cur = p < 0.5 ? 'prep' : 'finish';
+            return cur;
+        }
         function setStage(name) {
-            for (var i = 0; i < stages.length; i++) {
-                stages[i].classList.toggle('active', stages[i].getAttribute('data-stage') === name);
+            if (!stagesWrap) { return; }
+            var idx = ORDER.indexOf(name);
+            var spans = stagesWrap.querySelectorAll('span');
+            for (var i = 0; i < spans.length; i++) {
+                var st = spans[i].getAttribute('data-pbstage');
+                var si = ORDER.indexOf(st);
+                spans[i].classList.toggle('active', st === name);
+                spans[i].classList.toggle('done', si > -1 && si < idx);
             }
         }
-        function setReveal(pct) {
-            if (revealRect) { revealRect.setAttribute('width', (pct / 100 * CAR_W).toFixed(1)); }
-        }
 
-        // Reduced motion: show the finished painted car, no animation, no button.
-        if (reduce) {
-            setReveal(100);
+        // Fallback / reduced motion: finished booth state, no timeline.
+        if (!hasGsap || !hasST || reduce) {
+            setPB(1);
             setStage('finish');
-            if (bar) { bar.style.width = '100%'; }
-            if (playBtn) { playBtn.style.display = 'none'; }
+            var k;
+            for (k = 0; k < lights.length; k++) { lights[k].style.opacity = '0.85'; }
+            for (k = 0; k < tapes.length; k++) { tapes[k].style.opacity = '0'; }
+            if (floor) { floor.style.opacity = '0.5'; }
             return;
         }
 
-        var playing = false, raf = null, lastSpray = 0;
-        var T_PREP = 700, T_SPRAY = 2500, T_CLEAR = 1200, T_TOTAL = T_PREP + T_SPRAY + T_CLEAR;
+        var gsap = window.gsap;
+        var pb = { v: 0 };
+        setPB(0);
+        if (car) { gsap.set(car, { xPercent: -50, yPercent: -46 }); } // centre (matches CSS)
 
-        function spawn(pct) {
-            if (!emit || emit.childElementCount > 40) { return; }
-            for (var i = 0; i < 2; i++) {
-                var p = document.createElement('span');
-                p.style.left = pct + '%';
-                p.style.top = '15%';
-                p.style.setProperty('--fx', (Math.random() * 28 - 14).toFixed(0) + 'px');
-                p.style.setProperty('--fy', (30 + Math.random() * 45).toFixed(0) + 'px');
-                p.addEventListener('animationend', function () { this.remove(); });
-                emit.appendChild(p);
+        function addTweens(tl) {
+            // PREP - booth fades into view (heading stays readable throughout)
+            if (stageEl) { tl.from(stageEl, { opacity: 0, y: 24, duration: 1, ease: 'power2.out' }, 0); }
+            // BOOTH LIGHTS - power on left -> right, floor appears
+            if (lights.length) { tl.to(lights, { opacity: 0.9, duration: 1.4, stagger: 0.18, ease: 'power1.out' }, 1); }
+            if (floor) { tl.to(floor, { opacity: 0.55, duration: 1.2, ease: 'power1.out' }, 1.2); }
+            // MASK - tape fades/slides into place
+            if (tapes.length) { tl.fromTo(tapes, { opacity: 0, y: -6 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.12, ease: 'power2.out' }, 3); }
+            // SPRAY - mist passes front -> rear
+            if (mist.length) {
+                tl.fromTo(mist, { opacity: 0, xPercent: 120 },
+                    { opacity: 0.7, xPercent: -150, duration: 1.3, ease: 'none', stagger: { each: 0.05, from: 'random' } }, 4.5);
+                tl.to(mist, { opacity: 0, duration: 0.5, ease: 'power1.in' }, 6.0);
             }
+            // COLOUR - painted metallic builds front -> rear
+            tl.to(pb, { v: 1, duration: 2.5, ease: 'none', onUpdate: function () { setPB(pb.v); } }, 6.5);
+            // CLEAR COAT - tape peels away + one soft reflection sweep
+            if (tapes.length) { tl.to(tapes, { opacity: 0, y: -8, duration: 0.6, stagger: 0.08, ease: 'power2.in' }, 9); }
+            if (glossBar) {
+                tl.fromTo(glossBar, { xPercent: 180, opacity: 0 }, { xPercent: -160, duration: 1.6, ease: 'power1.inOut' }, 9);
+                tl.to(glossBar, { opacity: 0.6, duration: 0.45, ease: 'power2.out' }, 9);
+                tl.to(glossBar, { opacity: 0, duration: 0.6, ease: 'power2.in' }, 10.2);
+            }
+            // FINISH - colour settles, car eases forward, floor strengthens
+            if (car)   { tl.to(car, { x: 12, y: -6, duration: 1.3, ease: 'power2.out' }, 10.5); }
+            if (floor) { tl.to(floor, { opacity: 0.72, duration: 1.0, ease: 'power1.out' }, 10.5); }
         }
 
-        function frame(now, start) {
-            var t = now - start;
-            if (bar) { bar.style.width = Math.min(100, t / T_TOTAL * 100).toFixed(1) + '%'; }
-
-            if (t < T_PREP) {
-                setStage('prep');
-            } else if (t < T_PREP + T_SPRAY) {
-                demo.classList.add('spraying');
-                setStage('spray');
-                var pct = Math.min(100, (t - T_PREP) / T_SPRAY * 100);
-                setReveal(pct);
-                if (gun) { gun.style.left = pct + '%'; }
-                if (now - lastSpray > 36) { lastSpray = now; spawn(pct); }
-            } else if (t < T_TOTAL) {
-                demo.classList.remove('spraying');
-                demo.classList.add('clearcoating');
-                setStage('clear');
-                setReveal(100);
-            } else {
-                setReveal(100);
-                setStage('finish');
-                demo.classList.remove('spraying', 'clearcoating', 'playing');
-                demo.classList.add('finished');
-                if (bar) { bar.style.width = '100%'; }
-                if (playBtn) {
-                    playBtn.innerHTML = '<span class="material-symbols-outlined">replay</span> Replay';
-                    playBtn.setAttribute('aria-label', 'Replay paint demo');
+        if (mobile) {
+            // Short auto-play on enter; no pin, no scrub, native touch scroll kept.
+            var mtl = gsap.timeline({
+                paused: true,
+                onUpdate: function () { setStage(resolve(mtl.progress())); },
+                onComplete: function () { setStage('finish'); }
+            });
+            addTweens(mtl);
+            mtl.timeScale(mtl.duration() / 3.4); // ~3.4s total
+            window.ScrollTrigger.create({
+                trigger: section, start: 'top 78%', once: true,
+                onEnter: function () { mtl.play(); }
+            });
+        } else {
+            // Desktop: scrub as the section travels through the viewport.
+            // No pin - nothing is ever position:fixed, so the stage bar can
+            // never stick to the top or overlap the following sections.
+            var tl = gsap.timeline({
+                scrollTrigger: {
+                    trigger: section,
+                    start: 'top 80%',
+                    end: 'bottom 20%',
+                    scrub: 0.8,
+                    onUpdate: function (self) { setStage(resolve(self.progress())); }
                 }
-                playing = false; raf = null;
-                return;
-            }
-            raf = requestAnimationFrame(function (n) { frame(n, start); });
+            });
+            addTweens(tl);
         }
-
-        function play() {
-            if (playing) { return; }
-            playing = true;
-            if (emit) { emit.innerHTML = ''; }
-            demo.classList.remove('finished', 'clearcoating', 'spraying');
-            demo.classList.add('playing');
-            setReveal(0);
-            if (bar) { bar.style.width = '0'; }
-            var start = performance.now();
-            raf = requestAnimationFrame(function (n) { frame(n, start); });
-        }
-
-        if (playBtn) { playBtn.addEventListener('click', play); }
     });
 })();

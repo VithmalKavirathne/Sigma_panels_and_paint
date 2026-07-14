@@ -46,10 +46,54 @@ function asset($path) {
 }
 
 /**
- * Generates a root-relative URL for a given path.
+ * Generates a clean, root-relative URL for a given internal path.
+ * Known page files are mapped to pretty URLs (e.g. public/about.php -> /about,
+ * public/service.php?slug=x -> /service/x). Anything unmapped falls back to a
+ * plain root-relative path so old links keep working.
  */
 function url($path) {
-    return base_path() . '/' . ltrim($path, '/');
+    static $map = [
+        'public/index.php'          => '/',
+        'public/about.php'          => '/about',
+        'public/services.php'       => '/services',
+        'public/gallery.php'        => '/gallery',
+        'public/quote.php'          => '/quote',
+        'public/contact.php'        => '/contact',
+        'public/faq.php'            => '/faq',
+        'public/privacy-policy.php' => '/privacy-policy',
+        'public/terms.php'          => '/terms',
+        'public/sitemap.php'        => '/sitemap.xml',
+        'public/robots.php'         => '/robots.txt',
+        'admin/login.php'           => '/admin/login',
+        'admin/logout.php'          => '/admin/logout',
+        'admin/dashboard.php'       => '/admin/dashboard',
+        'admin/business-info.php'   => '/admin/business-info',
+        'admin/homepage.php'        => '/admin/homepage',
+        'admin/about-basic.php'     => '/admin/about-basic',
+        'admin/services.php'        => '/admin/services',
+        'admin/gallery.php'         => '/admin/gallery',
+        'admin/quote-requests.php'  => '/admin/quote-requests',
+        'admin/messages.php'        => '/admin/messages',
+        'admin/seo-basic.php'       => '/admin/seo-basic',
+        'admin/settings-basic.php'  => '/admin/settings-basic',
+        'admin/faqs.php'            => '/admin/faqs',
+    ];
+    $clean = ltrim((string) $path, '/');
+
+    // Pretty service detail: public/service.php?slug=xyz -> /service/xyz
+    if (preg_match('#^public/service\.php\?slug=([^&]+)(.*)$#', $clean, $m)) {
+        return base_path() . '/service/' . $m[1] . $m[2];
+    }
+
+    $qpos  = strpos($clean, '?');
+    $base  = $qpos === false ? $clean : substr($clean, 0, $qpos);
+    $query = $qpos === false ? '' : substr($clean, $qpos);
+
+    if (isset($map[$base])) {
+        $target = $map[$base];
+        return $target === '/' ? base_path() . '/' . $query : base_path() . $target . $query;
+    }
+    return base_path() . '/' . $clean;
 }
 
 /**

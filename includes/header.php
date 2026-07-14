@@ -30,6 +30,7 @@ $navLinks = [
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="<?= e(asset('assets/vendor/lenis/lenis.css')) ?>">
     <link rel="stylesheet" href="<?= e(asset('assets/css/public.css')) ?>">
     <link rel="stylesheet" href="<?= e(asset('assets/css/animations.css')) ?>">
     <?php if (in_array($pageKey, ['home', 'contact'], true)) { echo render_local_business_jsonld($settings); } ?>

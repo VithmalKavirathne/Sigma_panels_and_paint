@@ -753,8 +753,8 @@ img { max-width: 100%; display: block; }
 .ref-logo-word .accent { color: var(--coral); }
 .ref-logo-sub { font-size: 10px; font-weight: 700; letter-spacing: 0.42em; color: var(--on-surface-variant); margin-top: 5px; }
 
-/* Large light car visual (integrated on the beige, no dark box) */
-.ref-car-svg, .ref-car-image { width: 116%; max-width: none; margin-left: -6%; height: auto; display: block; filter: drop-shadow(0 30px 50px rgba(0,0,0,0.2)); }
+/* Large photographic car visual (integrated on the beige, no dark box) */
+.real-car-reveal { width: 116%; max-width: none; margin-left: -6%; height: auto; display: block; filter: drop-shadow(0 30px 50px rgba(0,0,0,0.2)); }
 
 /* Slide counter under the CTAs */
 .lux-count { display: flex; align-items: center; gap: 16px; margin-top: 26px; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: rgba(17,17,17,0.55); }
@@ -774,7 +774,7 @@ img { max-width: 100%; display: block; }
 .lux-feature-card { bottom: 16%; }
 
 @media (max-width: 1024px) {
-    .ref-car-svg, .ref-car-image { width: 100%; margin-left: 0; max-width: 640px; margin-left: auto; margin-right: auto; }
+    .real-car-reveal { width: 100%; margin-left: 0; max-width: 640px; margin-left: auto; margin-right: auto; }
     .lux-count { display: none; }
 }
 
@@ -798,7 +798,7 @@ img { max-width: 100%; display: block; }
 /* Right car visual: large but not cropped */
 .lux-hero-visual { min-height: 460px; }
 .lux-hero-visual::before { font-size: 9.5vw; }
-.ref-car-svg, .ref-car-image { width: 98%; margin-left: -1%; }
+.real-car-reveal { width: 98%; margin-left: -1%; }
 
 /* Feature card clear of the front wheel */
 .lux-feature-card { bottom: 18%; width: 300px; }
@@ -810,3 +810,117 @@ img { max-width: 100%; display: block; }
 .scroll-rail { left: 14px; top: 40%; }
 @media (max-width: 1280px) { .scroll-rail { display: none; } }
 @media (max-width: 1024px) { .lux-hero-shell { min-height: 0; } }
+
+/* ============================================================
+   Phase 5 - Scroll-driven paint-booth sequence (#paint-process)
+   Self-contained new section. All decorative layers are scoped with
+   pb-* selectors so they never collide with the hero spray system.
+   Motion is driven by GSAP (home-animations.js); this file provides the
+   static look + a reduced-motion final state.
+   ============================================================ */
+.paint-booth-section {
+    position: relative; overflow: hidden; background: #16181c; color: #f4f2ee;
+    padding: 84px 0; display: flex; flex-direction: column; justify-content: center;
+}
+@media (min-width: 768px) { .paint-booth-section { min-height: 100vh; padding: 0; } }
+
+.pb-head { position: relative; z-index: 3; max-width: 720px; margin: 0 auto 40px; padding: 0 24px; text-align: center; }
+.pb-eyebrow { color: var(--coral, #F95C4B); font-size: 12px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; }
+.pb-heading { font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 800; letter-spacing: -0.02em; margin-top: 12px; line-height: 1.05; }
+.pb-sub { margin-top: 16px; font-size: clamp(1rem, 1.1vw, 1.12rem); line-height: 1.7; color: rgba(244,242,238,0.66); }
+
+.pb-stage-wrap { position: relative; z-index: 2; width: 100%; max-width: 980px; margin: 0 auto; padding: 0 24px; }
+
+.pb-stage {
+    position: relative; width: 100%; aspect-ratio: 16 / 8; border-radius: 20px; overflow: hidden;
+    background: radial-gradient(120% 90% at 50% 0%, #2a2d33, #131417 72%);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05), 0 40px 80px -30px rgba(0,0,0,0.6);
+}
+
+/* Booth shell */
+.pb-wall { position: absolute; inset: 0; background: linear-gradient(180deg, #22252b 0%, #191b1f 62%, #131418 100%); }
+.pb-wall::after {
+    content: ''; position: absolute; inset: 0; opacity: 0.5;
+    background-image: repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 16.6%);
+}
+.pb-lights { position: absolute; top: 6%; left: 0; right: 0; height: 13%; z-index: 1;
+    display: flex; justify-content: space-around; align-items: stretch; padding: 0 7%; }
+.pb-lights i {
+    display: block; width: 15%; border-radius: 6px; opacity: 0.12;
+    background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.4));
+    box-shadow: 0 0 22px 3px rgba(255,255,255,0.22);
+}
+.pb-floor {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 26%; z-index: 1; opacity: 0.3;
+    background: linear-gradient(180deg, transparent, rgba(249,92,75,0.06) 42%, rgba(0,0,0,0.45));
+}
+
+/* Vehicle: aligned primer + paint layers (centred via transform for the
+   no-JS/reduced-motion case; GSAP re-applies the same via xPercent/yPercent) */
+.pb-car { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -46%); width: 74%; max-width: 600px; z-index: 2; }
+.pb-car-layer { position: absolute; inset: 0; }
+.pb-car-layer svg { width: 100%; height: auto; display: block; filter: drop-shadow(0 24px 34px rgba(0,0,0,0.45)); }
+.pb-primer { position: relative; }            /* defines the box */
+.pb-paint {
+    /* Painted colour revealed front(right) -> rear(left) with a soft mask edge */
+    -webkit-mask-image: linear-gradient(to left, #000 calc(var(--pb, 0) * 108% - 8%), transparent calc(var(--pb, 0) * 108%));
+            mask-image: linear-gradient(to left, #000 calc(var(--pb, 0) * 108% - 8%), transparent calc(var(--pb, 0) * 108%));
+}
+
+/* Masking tape */
+.pb-tape { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.pb-tape i {
+    position: absolute; opacity: 0; border-radius: 2px;
+    background: rgba(228,216,182,0.85); box-shadow: 0 1px 2px rgba(0,0,0,0.35);
+}
+
+/* Clear-coat gloss (broad soft highlight + thin reflection edge, one band) */
+.pb-gloss { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
+.pb-gloss i {
+    position: absolute; top: -30%; left: 0; width: 55%; height: 160%;
+    transform: translateX(180%) rotate(9deg); opacity: 0;
+    background: linear-gradient(108deg,
+        transparent 0%, rgba(255,255,255,0.03) 34%, rgba(255,255,255,0.16) 47%,
+        rgba(255,255,255,0.6) 53%, rgba(255,255,255,0.14) 59%, rgba(255,255,255,0.03) 72%, transparent 100%);
+}
+
+/* Spray mist (booth level, in front of the car during SPRAY) */
+.pb-mist { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
+.pb-mist i {
+    position: absolute; left: 0; width: 22px; height: 22px; border-radius: 50%; opacity: 0;
+    background: radial-gradient(circle, rgba(255,255,255,0.5), rgba(249,92,75,0.18) 55%, transparent 72%);
+    filter: blur(1px);
+}
+
+/* Stage indicator */
+.pb-stages { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+.pb-stages span {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(244,242,238,0.4); background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 99px;
+    transition: color 0.3s ease, background 0.3s ease;
+}
+.pb-stages span.done { color: rgba(244,242,238,0.72); background: rgba(249,92,75,0.14); }
+.pb-stages span.active { color: #fff; background: var(--coral, #F95C4B); }
+
+/* Responsive */
+@media (max-width: 1024px) { .pb-stage { aspect-ratio: 16 / 9; } .pb-car { width: 80%; } }
+@media (max-width: 767px) {
+    .pb-stage { aspect-ratio: 4 / 3; }
+    .pb-car { width: 86%; }
+    .pb-mist i:nth-child(n+11) { display: none; }   /* fewer mist elements on mobile */
+    .pb-stages { gap: 6px; }
+    .pb-stages span { font-size: 10px; padding: 4px 9px; letter-spacing: 0.1em; }
+}
+
+/* Reduced motion: show the finished booth state, no animation, no JS timeline */
+@media (prefers-reduced-motion: reduce) {
+    .pb-lights i { opacity: 0.85 !important; }
+    .pb-floor { opacity: 0.5 !important; }
+    .pb-paint { -webkit-mask-image: none !important; mask-image: none !important; }
+    .pb-tape i { opacity: 0 !important; }
+    .pb-mist, .pb-gloss { display: none !important; }
+    .pb-stages span[data-pbstage="finish"] { color: #fff !important; background: var(--coral, #F95C4B) !important; }
+    .pb-stages span:not([data-pbstage="finish"]) { color: rgba(244,242,238,0.4) !important; background: rgba(255,255,255,0.05) !important; }
+}
+
+/* (Removed: Precision Colour Matching feature - section deleted from the homepage.) */

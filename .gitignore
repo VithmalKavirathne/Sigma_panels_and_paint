@@ -54,3 +54,11 @@ public/db-test.php
 
 # Development-only public test files
 public/db-test.php
+
+# Development-only public test files
+public/db-test.php
+
+# Uploaded content should not be committed, keep folders only
+uploads/*
+!uploads/*/
+!uploads/*/.gitkeep

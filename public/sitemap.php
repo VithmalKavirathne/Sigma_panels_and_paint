@@ -25,7 +25,7 @@ try {
     $rows = db()->query("SELECT slug FROM services WHERE is_active = 1 ORDER BY sort_order ASC, id ASC")->fetchAll();
     foreach ($rows as $r) {
         if (!empty($r['slug'])) {
-            $paths[] = url('public/service.php') . '?slug=' . rawurlencode($r['slug']);
+            $paths[] = url('public/service.php?slug=' . rawurlencode($r['slug']));
         }
     }
 } catch (Exception $e) {
