@@ -136,35 +136,39 @@
 
 /* ============================================================
    Hero car - ONE complete car, transparent-background PNG.
-   Single static <img> (hero-car-transparent.png), object-fit: contain,
-   no container background (no white/grey/cream box), no filters, no masks,
-   no clip-path, no gloss, no stage pills, no ScrollTrigger. The car floats
-   on the hero's cream->white gradient (see .sigma-lux-hero in public.css).
+   Single static <img> (hero-car-transparent-clean.png), object-fit: contain.
+   The PNG itself is the cutout: NO container background (no white/grey/cream
+   box), NO drop-shadow, box-shadow, border, outline, filter, mask, clip-path,
+   backdrop-filter, mix-blend-mode, or duplicate layers. Sized smaller and set
+   to the right so it never invades the hero text column.
    Default (no-JS / reduced motion): the complete car shows immediately.
    ============================================================ */
-.hero-real-car {
-    position: relative;
-    width: min(720px, 55vw);
-    margin-left: auto;
-    z-index: 1;               /* feature card (z-index 4+) stays above */
+.hero-top-car {
+    position: absolute;
+    right: 5%;
+    top: 54%;
+    transform: translateY(-50%);
+    width: min(650px, 46vw);
+    z-index: 1;               /* feature card (z-index 4) stays above */
+    pointer-events: none;
 }
-.hero-real-car img {
+.hero-top-car img {
     display: block;
     width: 100%;
     height: auto;
     object-fit: contain;
 }
 
-/* Optional single entrance: fade + slide once, no colour/filter change.
-   Applied only when JS confirms it is safe (adds .hero-car-enter). */
-.hero-real-car.hero-car-enter { animation: heroCarEnter 0.7s ease-out both; }
+/* Optional single entrance on the IMAGE only (keeps the container's
+   translateY(-50%) centering). Fade + slide once, no colour/filter change. */
+.hero-top-car img.hero-car-enter { animation: heroCarEnter 0.7s ease-out both; }
 @keyframes heroCarEnter {
     from { opacity: 0; transform: translateX(15px); }
     to   { opacity: 1; transform: translateX(0); }
 }
 
 /* (Removed: filter-based paint reveal, gloss sweep, PREP/PAINT/CLEAR/FINISH
-   stage pills, and the hero ScrollTrigger - replaced by this static photo.) */
+   stage pills, and the hero ScrollTrigger - replaced by this static PNG.) */
 
 /* ============================================================
    Reduced motion: respect user preference
@@ -174,7 +178,8 @@
     .shine-effect::after, .float-anim, .float-anim-delayed, .pulse-icon, .mist-bg { animation: none !important; }
     .scroll-track::after { animation: none !important; }
 
-    /* Hero: show the complete car immediately; no entrance animation */
-    .hero-real-car.hero-car-enter { animation: none !important; }
-    .hero-real-car, .hero-real-car img { opacity: 1 !important; transform: none !important; }
+    /* Hero: show the complete car immediately; only the image resets (the
+       container keeps its translateY(-50%) centering). */
+    .hero-top-car img.hero-car-enter { animation: none !important; }
+    .hero-top-car img { opacity: 1 !important; transform: none !important; }
 }

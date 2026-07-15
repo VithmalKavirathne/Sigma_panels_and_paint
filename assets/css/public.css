@@ -753,8 +753,8 @@ img { max-width: 100%; display: block; }
 .ref-logo-word .accent { color: var(--coral); }
 .ref-logo-sub { font-size: 10px; font-weight: 700; letter-spacing: 0.42em; color: var(--on-surface-variant); margin-top: 5px; }
 
-/* (Hero car visual is the single static .hero-real-car img defined in
-   animations.css - the original photo, no filters, blends on the cream->white hero.) */
+/* (Hero car visual is the single static .hero-top-car img defined in
+   animations.css - transparent-background cutout PNG, no box, no shadow/filter.) */
 
 /* Slide counter under the CTAs */
 .lux-count { display: flex; align-items: center; gap: 16px; margin-top: 26px; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: rgba(17,17,17,0.55); }
@@ -777,7 +777,15 @@ img { max-width: 100%; display: block; }
     /* Stacked layout: text on top, car below - blend cream (top) into white
        (behind the car) vertically so the white photo has no box. */
     .sigma-lux-hero { background: linear-gradient(180deg, #f2efe9 0%, #f2efe9 40%, #ffffff 68%, #ffffff 100%); }
-    .hero-real-car { width: min(560px, 86vw); margin-inline: auto; }
+    /* Stacked: car flows normally, centred, complete - no absolute offset. */
+    .hero-top-car {
+        position: relative;
+        right: auto;
+        top: auto;
+        transform: none;
+        width: min(100%, 600px);
+        margin: 20px auto 0;
+    }
     .lux-count { display: none; }
 }
 

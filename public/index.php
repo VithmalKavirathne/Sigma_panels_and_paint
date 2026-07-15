@@ -61,11 +61,11 @@ $luxBody  = $heroBody ?: 'Sigma Panels & Paint delivers flawless repairs with fa
         <div class="lux-hero-visual" data-reveal="fade">
             <div class="lux-ghost" aria-hidden="true"><span>CRAFTED</span></div>
             <div class="lux-car-stage">
-                <div class="hero-real-car" data-hero-car>
+                <div class="hero-top-car" data-hero-car>
                     <img
-                        src="<?= e(asset('assets/images/home/hero-car-transparent.png')) ?>"
-                        width="1024"
-                        height="768"
+                        src="<?= e(asset('assets/images/home/hero-car-transparent-clean.png')) ?>?v=20260715-2"
+                        width="936"
+                        height="433"
                         alt="Professionally refinished sports car">
                 </div>
             </div>

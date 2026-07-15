@@ -23,18 +23,22 @@
     'use strict';
 
     document.addEventListener('DOMContentLoaded', function () {
-        var car = document.querySelector('.hero-real-car[data-hero-car]');
+        var car = document.querySelector('.hero-top-car[data-hero-car]');
         if (!car) { return; }
+        var img = car.querySelector('img');
+        if (!img) { return; }
 
         var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         if (reduce) { return; } // CSS already shows the complete car; no entrance.
 
+        // Animate the IMAGE (not the container) so the container keeps its
+        // translateY(-50%) centering transform undisturbed.
         if (typeof window.gsap !== 'undefined') {
             // Single entrance tween - no ScrollTrigger, no filters, plays once.
-            window.gsap.from(car, { opacity: 0, x: 15, duration: 0.7, ease: 'power2.out' });
+            window.gsap.from(img, { opacity: 0, x: 15, duration: 0.7, ease: 'power2.out' });
         } else {
             // No GSAP: fall back to the CSS keyframe entrance (also one-off).
-            car.classList.add('hero-car-enter');
+            img.classList.add('hero-car-enter');
         }
     });
 })();
