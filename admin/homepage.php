@@ -4,11 +4,145 @@
 
 $adminPageKey = 'homepage';
 require_once __DIR__ . '/../includes/admin-header.php';
+require_once __DIR__ . '/../includes/upload.php';
 
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
 $error = '';
 $success = '';
+
+// Guard: a POST larger than the server's post_max_size arrives with empty
+// $_POST/$_FILES. Surface a clear message instead of a confusing CSRF failure.
+if (is_post() && empty($_POST) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+    $_SESSION['admin_error'] = 'The upload exceeded the server size limit. Use a smaller MP4 (max 25MB), or raise upload_max_filesize / post_max_size.';
+    redirect('admin/homepage.php');
+}
+
+// ---------------------------------------------------------------
+// Paint Booth Video handlers (save / remove video / remove poster)
+// ---------------------------------------------------------------
+if (is_post() && in_array($action, ['video_save', 'video_remove_video', 'video_remove_poster'], true)) {
+    if (!validate_csrf_token($_POST['csrf_token'] ?? '')) {
+        $_SESSION['admin_error'] = 'Invalid form submission.';
+        redirect('admin/homepage.php');
+    }
+
+    // Ensure the singleton config row exists (idempotent).
+    try {
+        $vid = $pdo->query("SELECT * FROM homepage_video ORDER BY id ASC LIMIT 1")->fetch();
+        if (!$vid) {
+            $pdo->exec("INSERT INTO homepage_video (paint_video_enabled, paint_video_autoplay, paint_video_loop, paint_video_eyebrow, paint_video_heading, paint_video_description) VALUES (1,1,1,'THE SIGMA FINISH','Precision in Every Layer','From preparation and colour matching to clear coat and final polish, every stage is controlled for a clean, durable finish.')");
+            $vid = $pdo->query("SELECT * FROM homepage_video ORDER BY id ASC LIMIT 1")->fetch();
+        }
+    } catch (PDOException $e) {
+        $_SESSION['admin_error'] = 'The homepage_video table is missing. Run database/migrations/phase-video-section.sql first.';
+        redirect('admin/homepage.php');
+    }
+    $vidId = (int) $vid['id'];
+
+    // Remove current video only (CSRF + POST already enforced).
+    if ($action === 'video_remove_video') {
+        try {
+            $stmt = $pdo->prepare("UPDATE homepage_video SET paint_video_path = NULL, updated_at = NOW() WHERE id = :id");
+            $stmt->execute(['id' => $vidId]);
+            if (!empty($vid['paint_video_path'])) { delete_upload_file($vid['paint_video_path']); }
+            $_SESSION['admin_success'] = 'Paint booth video removed.';
+        } catch (PDOException $e) {
+            $_SESSION['admin_error'] = 'Could not remove the video.';
+        }
+        redirect('admin/homepage.php');
+    }
+
+    // Remove current poster only.
+    if ($action === 'video_remove_poster') {
+        try {
+            $stmt = $pdo->prepare("UPDATE homepage_video SET paint_video_poster = NULL, updated_at = NOW() WHERE id = :id");
+            $stmt->execute(['id' => $vidId]);
+            if (!empty($vid['paint_video_poster'])) { delete_upload_file($vid['paint_video_poster']); }
+            $_SESSION['admin_success'] = 'Poster image removed.';
+        } catch (PDOException $e) {
+            $_SESSION['admin_error'] = 'Could not remove the poster.';
+        }
+        redirect('admin/homepage.php');
+    }
+
+    // ---- Save (text, toggles, and optional replacement uploads) ----
+    $eyebrow     = trim($_POST['paint_video_eyebrow'] ?? '');
+    $heading     = trim($_POST['paint_video_heading'] ?? '');
+    $description = trim($_POST['paint_video_description'] ?? '');
+    $enabled     = isset($_POST['paint_video_enabled']) ? 1 : 0;
+    $autoplay    = isset($_POST['paint_video_autoplay']) ? 1 : 0;
+    $loop        = isset($_POST['paint_video_loop']) ? 1 : 0;
+
+    $oldVideoPath  = $vid['paint_video_path'];
+    $oldPosterPath = $vid['paint_video_poster'];
+    $newVideoPath  = $oldVideoPath;
+    $newPosterPath = $oldPosterPath;
+    $err = '';
+
+    // 1) New video: upload + fully validate BEFORE any DB change or deletion.
+    $vres = save_video_upload('paint_video_file', 'homepage/videos', 26214400); // 25 MB
+    if ($vres['error']) {
+        $err = $vres['error'];
+    } elseif ($vres['uploaded']) {
+        $newVideoPath = $vres['path'];
+    }
+
+    // 2) New poster (optional). If it fails, discard any just-uploaded video.
+    $pres = ['uploaded' => false];
+    if (!$err) {
+        $pres = save_upload('paint_video_poster_file', 'homepage/video-posters', ['jpg', 'jpeg', 'png', 'webp'], 4194304); // 4 MB
+        if ($pres['error']) {
+            $err = $pres['error'];
+            if ($vres['uploaded'] && $newVideoPath !== $oldVideoPath) { delete_upload_file($newVideoPath); }
+        } elseif ($pres['uploaded']) {
+            $newPosterPath = $pres['path'];
+        }
+    }
+
+    if ($err) {
+        $_SESSION['admin_error'] = $err;
+        redirect('admin/homepage.php');
+    }
+
+    try {
+        $stmt = $pdo->prepare(
+            "UPDATE homepage_video SET
+                paint_video_path = :path,
+                paint_video_poster = :poster,
+                paint_video_enabled = :enabled,
+                paint_video_autoplay = :autoplay,
+                paint_video_loop = :loop,
+                paint_video_eyebrow = :eyebrow,
+                paint_video_heading = :heading,
+                paint_video_description = :description,
+                updated_at = NOW()
+             WHERE id = :id"
+        );
+        $stmt->bindValue(':path', $newVideoPath !== '' ? $newVideoPath : null);
+        $stmt->bindValue(':poster', $newPosterPath !== '' ? $newPosterPath : null);
+        $stmt->bindValue(':enabled', $enabled, PDO::PARAM_INT);
+        $stmt->bindValue(':autoplay', $autoplay, PDO::PARAM_INT);
+        $stmt->bindValue(':loop', $loop, PDO::PARAM_INT);
+        $stmt->bindValue(':eyebrow', $eyebrow !== '' ? $eyebrow : null);
+        $stmt->bindValue(':heading', $heading !== '' ? $heading : null);
+        $stmt->bindValue(':description', $description !== '' ? $description : null);
+        $stmt->bindValue(':id', $vidId, PDO::PARAM_INT);
+        $stmt->execute();
+
+        // DB update succeeded: now it is safe to delete replaced old files.
+        if ($vres['uploaded'] && $oldVideoPath && $oldVideoPath !== $newVideoPath) { delete_upload_file($oldVideoPath); }
+        if ($pres['uploaded'] && $oldPosterPath && $oldPosterPath !== $newPosterPath) { delete_upload_file($oldPosterPath); }
+
+        $_SESSION['admin_success'] = 'Paint booth video settings saved.';
+    } catch (PDOException $e) {
+        // Preserve prior state: remove any newly-uploaded files, keep the old ones.
+        if ($vres['uploaded'] && $newVideoPath !== $oldVideoPath) { delete_upload_file($newVideoPath); }
+        if ($pres['uploaded'] && $newPosterPath !== $oldPosterPath) { delete_upload_file($newPosterPath); }
+        $_SESSION['admin_error'] = 'Database error saving video settings.';
+    }
+    redirect('admin/homepage.php');
+}
 
 // Handle Toggle Action
 if ($action === 'toggle' && isset($_GET['id']) && is_post()) {
@@ -152,6 +286,124 @@ if (isset($_SESSION['admin_error'])) { $error = $_SESSION['admin_error']; unset(
                 </tbody>
             </table>
         </div>
+    </div>
+
+    <?php
+    // ---- Paint Booth Video panel ----
+    $videoTableReady = true;
+    $video = null;
+    try {
+        $video = $pdo->query("SELECT * FROM homepage_video ORDER BY id ASC LIMIT 1")->fetch();
+    } catch (PDOException $e) {
+        $videoTableReady = false;
+    }
+    $v = array_merge([
+        'paint_video_path' => null, 'paint_video_poster' => null,
+        'paint_video_enabled' => 1, 'paint_video_autoplay' => 1, 'paint_video_loop' => 1,
+        'paint_video_eyebrow' => 'THE SIGMA FINISH', 'paint_video_heading' => 'Precision in Every Layer',
+        'paint_video_description' => 'From preparation and colour matching to clear coat and final polish, every stage is controlled for a clean, durable finish.',
+    ], is_array($video) ? $video : []);
+
+    $vPath   = trim((string)($v['paint_video_path'] ?? ''));
+    $vAbs    = $vPath !== '' ? dirname(__DIR__) . '/' . ltrim($vPath, '/') : '';
+    $vExists = $vPath !== '' && is_file($vAbs);
+    $vName   = $vExists ? basename($vPath) : '';
+    $vSize   = $vExists ? filesize($vAbs) : 0;
+    $vSizeMB = $vSize > 0 ? number_format($vSize / 1048576, 2) . ' MB' : '';
+
+    $pPath   = trim((string)($v['paint_video_poster'] ?? ''));
+    $pAbs    = $pPath !== '' ? dirname(__DIR__) . '/' . ltrim($pPath, '/') : '';
+    $pExists = $pPath !== '' && is_file($pAbs);
+    ?>
+    <div class="dashboard-card" style="margin-top:24px;">
+        <h2 style="margin-top:0;">Paint Booth Video</h2>
+        <p style="color:var(--text-muted);margin-top:-6px;">A real video shown on the homepage in place of the old animated booth. Leave the video empty to hide the section from the public site.</p>
+
+        <?php if (!$videoTableReady): ?>
+            <div class="alert alert-error">The <code>homepage_video</code> table was not found. Run <code>database/migrations/phase-video-section.sql</code> to enable this section.</div>
+        <?php else: ?>
+
+            <div style="margin-bottom:18px;">
+                <?php if ($vExists): ?>
+                    <p>
+                        <strong>Status:</strong>
+                        <?php if (!empty($v['paint_video_enabled'])): ?>
+                            <span class="badge badge-success">Enabled</span>
+                        <?php else: ?>
+                            <span class="badge badge-secondary">Disabled</span>
+                        <?php endif; ?>
+                    </p>
+                    <p style="margin:6px 0;"><strong>Current video:</strong> <?= e($vName) ?><?= $vSizeMB ? ' (' . e($vSizeMB) . ')' : '' ?></p>
+                    <video src="<?= e(asset($vPath)) ?>" controls muted playsinline preload="metadata"
+                           <?php if ($pExists): ?>poster="<?= e(asset($pPath)) ?>"<?php endif; ?>
+                           style="width:100%;max-width:520px;border-radius:10px;background:#0f1013;display:block;"></video>
+
+                    <form method="POST" action="<?= e(url('admin/homepage.php?action=video_remove_video')) ?>"
+                          onsubmit="return confirm('Remove the current paint booth video? This cannot be undone.');"
+                          style="margin-top:10px;">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="btn btn-secondary btn-sm">Remove current video</button>
+                    </form>
+                <?php else: ?>
+                    <p style="color:var(--text-muted);">No paint booth video uploaded.</p>
+                <?php endif; ?>
+            </div>
+
+            <?php if ($pExists): ?>
+                <div style="margin-bottom:18px;">
+                    <p style="margin-bottom:6px;"><strong>Current poster:</strong></p>
+                    <img src="<?= e(asset($pPath)) ?>" alt="Poster preview" style="max-height:110px;border-radius:8px;display:block;">
+                    <form method="POST" action="<?= e(url('admin/homepage.php?action=video_remove_poster')) ?>"
+                          onsubmit="return confirm('Remove the current poster image?');"
+                          style="margin-top:10px;">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="btn btn-secondary btn-sm">Remove poster</button>
+                    </form>
+                </div>
+            <?php endif; ?>
+
+            <form method="POST" action="<?= e(url('admin/homepage.php?action=video_save')) ?>" enctype="multipart/form-data">
+                <?= csrf_field() ?>
+
+                <div class="form-group">
+                    <label for="paint_video_eyebrow">Eyebrow text</label>
+                    <input type="text" id="paint_video_eyebrow" name="paint_video_eyebrow" value="<?= e($v['paint_video_eyebrow']) ?>">
+                </div>
+
+                <div class="form-group">
+                    <label for="paint_video_heading">Heading</label>
+                    <input type="text" id="paint_video_heading" name="paint_video_heading" value="<?= e($v['paint_video_heading']) ?>">
+                </div>
+
+                <div class="form-group">
+                    <label for="paint_video_description">Description</label>
+                    <textarea id="paint_video_description" name="paint_video_description" rows="4"><?= e($v['paint_video_description']) ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="paint_video_file"><?= $vExists ? 'Replace video' : 'Upload video' ?> (MP4 only, max 25MB)</label>
+                    <input type="file" id="paint_video_file" name="paint_video_file" accept="video/mp4,.mp4">
+                </div>
+
+                <div class="form-group">
+                    <label for="paint_video_poster_file">Poster image (optional - JPG, PNG, WEBP)</label>
+                    <input type="file" id="paint_video_poster_file" name="paint_video_poster_file" accept=".jpg,.jpeg,.png,.webp">
+                </div>
+
+                <div style="margin-bottom:12px;">
+                    <label><input type="checkbox" name="paint_video_enabled" value="1" <?= !empty($v['paint_video_enabled']) ? 'checked' : '' ?>> Enable section (visible to public)</label>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label><input type="checkbox" name="paint_video_autoplay" value="1" <?= !empty($v['paint_video_autoplay']) ? 'checked' : '' ?>> Autoplay (muted, when in view)</label>
+                </div>
+                <div style="margin-bottom:20px;">
+                    <label><input type="checkbox" name="paint_video_loop" value="1" <?= !empty($v['paint_video_loop']) ? 'checked' : '' ?>> Loop</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Save Video Settings</button>
+            </form>
+
+        <?php endif; ?>
     </div>
 
 <?php elseif ($action === 'edit'): ?>

@@ -40,8 +40,6 @@ $heroBody = $hero['content'] ?? 'Panel beating, spray painting, insurance repair
 
 <!-- ===================== PREMIUM HERO ===================== -->
 <?php
-$heroCarFile = 'assets/images/home/hero-painted-car.webp';
-$hasHeroCar  = is_file(dirname(__DIR__) . '/' . $heroCarFile);
 $luxTitle = $heroTitle ?: 'Precision is our starting line';
 $luxBody  = $heroBody ?: 'Sigma Panels & Paint delivers flawless repairs with factory precision and a finish that exceeds expectations.';
 ?>
@@ -63,31 +61,13 @@ $luxBody  = $heroBody ?: 'Sigma Panels & Paint delivers flawless repairs with fa
         <div class="lux-hero-visual" data-reveal="fade">
             <div class="lux-ghost" aria-hidden="true"><span>CRAFTED</span></div>
             <div class="lux-car-stage">
-                <?php if ($hasHeroCar): ?>
-                    <img class="ref-car-image" src="<?= e(asset($heroCarFile)) ?>" alt="Premium vehicle refinished by Sigma Panels &amp; Paint">
-                <?php else: ?>
-                    <svg class="ref-car-svg" viewBox="0 0 760 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Premium sports car finished by Sigma Panels &amp; Paint">
-                        <defs>
-                            <linearGradient id="refBody" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0" stop-color="#eeeae3"/><stop offset="0.45" stop-color="#d3cfc7"/><stop offset="1" stop-color="#a7a39b"/>
-                            </linearGradient>
-                            <linearGradient id="refGlass" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0" stop-color="#3c3e42"/><stop offset="1" stop-color="#17181a"/>
-                            </linearGradient>
-                            <radialGradient id="refShadow" cx="0.5" cy="0.5" r="0.5">
-                                <stop offset="0" stop-color="rgba(0,0,0,0.30)"/><stop offset="1" stop-color="rgba(0,0,0,0)"/>
-                            </radialGradient>
-                        </defs>
-                        <ellipse cx="380" cy="300" rx="330" ry="30" fill="url(#refShadow)"/>
-                        <path d="M60,250 C74,214 140,204 205,202 L280,200 C330,166 415,152 505,160 C580,166 646,186 700,220 C726,234 726,250 700,256 L120,256 C92,256 66,258 60,250 Z" fill="url(#refBody)"/>
-                        <path d="M280,200 C330,166 415,152 505,160 C556,165 598,178 628,198 L600,204 C556,184 505,176 452,176 C388,176 322,186 296,204 Z" fill="#c4c0b8"/>
-                        <path d="M300,200 C338,172 404,166 476,172 C516,175 546,186 568,200 Z" fill="url(#refGlass)"/>
-                        <path d="M120,232 C280,224 520,224 690,232" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
-                        <path d="M690,214 C704,218 716,226 710,236 L690,236 Z" fill="#2a2a2a"/>
-                        <circle cx="222" cy="252" r="50" fill="#141414"/><circle cx="222" cy="252" r="27" fill="#2c2c2c"/><circle cx="222" cy="252" r="9" fill="#F95C4B"/>
-                        <circle cx="576" cy="252" r="50" fill="#141414"/><circle cx="576" cy="252" r="27" fill="#2c2c2c"/><circle cx="576" cy="252" r="9" fill="#F95C4B"/>
-                    </svg>
-                <?php endif; ?>
+                <div class="hero-real-car" data-hero-car>
+                    <img
+                        src="<?= e(asset('assets/images/home/hero-car-transparent.png')) ?>"
+                        width="1024"
+                        height="768"
+                        alt="Professionally refinished sports car">
+                </div>
             </div>
 
             <div class="lux-feature-card" data-reveal="fade">
@@ -142,6 +122,52 @@ $luxBody  = $heroBody ?: 'Sigma Panels & Paint delivers flawless repairs with fa
         </a>
     </div>
 </div>
+
+<!-- ===================== PAINT BOOTH VIDEO (admin-managed) ===================== -->
+<?php
+// Admin-managed paint booth video. Renders ONLY when enabled, a path is stored,
+// and the referenced file physically exists on disk.
+$paintVideo = get_homepage_video();
+$videoRel   = trim((string)($paintVideo['paint_video_path'] ?? ''));
+$posterRel  = trim((string)($paintVideo['paint_video_poster'] ?? ''));
+$videoAbs   = $videoRel !== '' ? dirname(__DIR__) . '/' . ltrim($videoRel, '/') : '';
+$posterAbs  = $posterRel !== '' ? dirname(__DIR__) . '/' . ltrim($posterRel, '/') : '';
+$showVideo  = !empty($paintVideo['paint_video_enabled'])
+           && $videoRel !== ''
+           && is_file($videoAbs);
+if ($showVideo):
+    $videoUrl  = asset($videoRel);
+    $posterUrl = ($posterRel !== '' && is_file($posterAbs)) ? asset($posterRel) : '';
+?>
+<section class="paint-video-section" id="paint-process">
+    <div class="container">
+        <div class="paint-video-heading">
+            <p class="eyebrow"><?= e($paintVideo['paint_video_eyebrow'] ?? 'THE SIGMA FINISH') ?></p>
+            <h2><?= e($paintVideo['paint_video_heading'] ?? 'Precision in Every Layer') ?></h2>
+            <?php if (!empty($paintVideo['paint_video_description'])): ?>
+                <p><?= e($paintVideo['paint_video_description']) ?></p>
+            <?php endif; ?>
+        </div>
+        <div class="paint-video-frame">
+            <video
+                class="paint-booth-video"
+                muted
+                playsinline
+                preload="metadata"
+                <?= !empty($paintVideo['paint_video_autoplay']) ? 'autoplay' : '' ?>
+                <?= !empty($paintVideo['paint_video_loop']) ? 'loop' : '' ?>
+                <?php if ($posterUrl !== ''): ?>poster="<?= e($posterUrl) ?>"<?php endif; ?>
+            >
+                <source src="<?= e($videoUrl) ?>" type="video/mp4">
+                Your browser does not support embedded video.
+            </video>
+            <button class="paint-video-play" type="button" aria-label="Play paint booth video" hidden>
+                <span class="material-symbols-outlined">play_arrow</span>
+            </button>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
 
 <?php if (!empty($storyBlocks)): ?>
 <!-- ===================== STORY / CRAFT SECTIONS ===================== -->

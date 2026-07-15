@@ -653,12 +653,12 @@ img { max-width: 100%; display: block; }
     min-height: 100vh;
     padding: 150px 0 90px;
     overflow: hidden;
-    background: #f2efe9;
+    /* Cream on the left (text) blending to white on the right so the car
+       photo's white studio background dissolves into the hero - no grey box. */
+    background: linear-gradient(90deg, #f2efe9 0%, #f2efe9 35%, #ffffff 52%, #ffffff 100%);
 }
-.lux-split { position: absolute; inset: 0; z-index: 0; pointer-events: none;
-    background: linear-gradient(90deg, #f4f1ec 0%, #f4f1ec 43%, #e6e0d5 43%, #ddd6ca 100%); }
-.lux-split::after { content: ''; position: absolute; top: 0; bottom: 0; left: 37%; width: 12%;
-    background: linear-gradient(90deg, rgba(244,241,236,0), #ece7de 50%, rgba(227,221,210,0)); }
+/* The old stone split is intentionally neutralised so the white blend shows. */
+.lux-split { position: absolute; inset: 0; z-index: 0; pointer-events: none; background: transparent; }
 
 .lux-hero-shell {
     position: relative; z-index: 2;
@@ -753,8 +753,8 @@ img { max-width: 100%; display: block; }
 .ref-logo-word .accent { color: var(--coral); }
 .ref-logo-sub { font-size: 10px; font-weight: 700; letter-spacing: 0.42em; color: var(--on-surface-variant); margin-top: 5px; }
 
-/* Large light car visual (integrated on the beige, no dark box) */
-.ref-car-svg, .ref-car-image { width: 116%; max-width: none; margin-left: -6%; height: auto; display: block; filter: drop-shadow(0 30px 50px rgba(0,0,0,0.2)); }
+/* (Hero car visual is the single static .hero-real-car img defined in
+   animations.css - the original photo, no filters, blends on the cream->white hero.) */
 
 /* Slide counter under the CTAs */
 .lux-count { display: flex; align-items: center; gap: 16px; margin-top: 26px; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: rgba(17,17,17,0.55); }
@@ -774,7 +774,10 @@ img { max-width: 100%; display: block; }
 .lux-feature-card { bottom: 16%; }
 
 @media (max-width: 1024px) {
-    .ref-car-svg, .ref-car-image { width: 100%; margin-left: 0; max-width: 640px; margin-left: auto; margin-right: auto; }
+    /* Stacked layout: text on top, car below - blend cream (top) into white
+       (behind the car) vertically so the white photo has no box. */
+    .sigma-lux-hero { background: linear-gradient(180deg, #f2efe9 0%, #f2efe9 40%, #ffffff 68%, #ffffff 100%); }
+    .hero-real-car { width: min(560px, 86vw); margin-inline: auto; }
     .lux-count { display: none; }
 }
 
@@ -798,7 +801,6 @@ img { max-width: 100%; display: block; }
 /* Right car visual: large but not cropped */
 .lux-hero-visual { min-height: 460px; }
 .lux-hero-visual::before { font-size: 9.5vw; }
-.ref-car-svg, .ref-car-image { width: 98%; margin-left: -1%; }
 
 /* Feature card clear of the front wheel */
 .lux-feature-card { bottom: 18%; width: 300px; }
@@ -810,3 +812,152 @@ img { max-width: 100%; display: block; }
 .scroll-rail { left: 14px; top: 40%; }
 @media (max-width: 1280px) { .scroll-rail { display: none; } }
 @media (max-width: 1024px) { .lux-hero-shell { min-height: 0; } }
+
+/* ============================================================
+   Paint booth video (#paint-process) - admin-managed real video.
+   Replaces the old fake scroll-driven booth SVG sequence. Clean,
+   premium video block: dark background, centred heading, 16:9 frame.
+   No sticky/fixed positioning, no pinning.
+   ============================================================ */
+.paint-video-section {
+    position: relative;
+    background: #16181c;
+    color: #f4f2ee;
+    padding: 96px 0;
+}
+
+.paint-video-heading {
+    max-width: 760px;
+    margin: 0 auto 44px;
+    padding: 0 24px;
+    text-align: center;
+}
+.paint-video-heading .eyebrow {
+    color: var(--coral, #F95C4B);
+    font-size: 12px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase;
+    margin: 0;
+}
+.paint-video-heading h2 {
+    font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 800; letter-spacing: -0.02em;
+    margin: 12px 0 0; line-height: 1.05;
+}
+.paint-video-heading p {
+    margin-top: 16px;
+    font-size: clamp(1rem, 1.1vw, 1.12rem); line-height: 1.7;
+    color: rgba(244,242,238,0.66);
+}
+
+.paint-video-frame {
+    position: relative;
+    max-width: 1100px;
+    margin-inline: auto;
+    aspect-ratio: 16 / 9;
+    border-radius: 22px;
+    overflow: hidden;
+    background: #0f1013;
+    box-shadow: 0 40px 80px -30px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+.paint-booth-video {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+/* Play button - only shown when autoplay is unavailable / reduced motion */
+.paint-video-play {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 68px; height: 68px;
+    border: none; border-radius: 50%;
+    background: var(--coral, #F95C4B);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 10px 30px -8px rgba(0,0,0,0.5);
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+.paint-video-play:hover { transform: translate(-50%, -50%) scale(1.06); }
+.paint-video-play:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.paint-video-play[hidden] { display: none; }
+.paint-video-play .material-symbols-outlined { font-size: 38px; line-height: 1; }
+
+/* Mobile: tighter padding, keep 16:9, no overflow */
+@media (max-width: 767px) {
+    .paint-video-section { padding: 56px 0; }
+    .paint-video-heading { margin-bottom: 28px; }
+    .paint-video-frame { border-radius: 16px; }
+    .paint-video-play { width: 58px; height: 58px; }
+    .paint-video-play .material-symbols-outlined { font-size: 32px; }
+}
+
+/* Reduced motion: never autoplay; poster/first frame + play button (JS-driven) */
+@media (prefers-reduced-motion: reduce) {
+    .paint-video-play { transition: none; }
+    .paint-video-play:hover { transform: translate(-50%, -50%); }
+}
+
+/* (Removed: Precision Colour Matching feature - section deleted from the homepage.) */
+
+/* ============================================================
+   Global paint-gun cursor (public pages, desktop only).
+   The element stays display:none (native cursor shown) until
+   paint-cursor.js verifies (pointer:fine)+(hover:hover)+>=1024px+
+   no reduced-motion and adds html.paint-cursor-enabled. If JS never
+   runs or fails, the normal cursor remains and nothing is visible.
+   Only transform + opacity animate; no infinite animation, no blur.
+   ============================================================ */
+.paint-cursor { display: none; }
+
+html.paint-cursor-enabled .paint-cursor {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 36px;
+    height: 36px;
+    z-index: 99999;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate3d(-100px, -100px, 0);
+    transform-origin: 4px 12px;   /* nozzle tip */
+    will-change: transform, opacity;
+    transition: opacity 140ms ease;
+    --pc-accent: #F95C4B;
+}
+
+html.paint-cursor-enabled .paint-cursor .paint-cursor-inner {
+    display: block;
+    width: 36px;
+    height: 36px;
+    transform: scale(1) rotate(0deg);
+    transform-origin: 4px 12px;   /* nozzle tip */
+    transition: transform 140ms ease;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+}
+html.paint-cursor-enabled .paint-cursor svg { display: block; width: 36px; height: 36px; }
+
+/* Interactive hover: subtle grow, slight tilt, brighter coral accent */
+html.paint-cursor-enabled .paint-cursor.is-hover { --pc-accent: #ff7a68; }
+html.paint-cursor-enabled .paint-cursor.is-hover .paint-cursor-inner { transform: scale(1.08) rotate(-6deg); }
+
+/* Press feedback */
+html.paint-cursor-enabled .paint-cursor.is-down .paint-cursor-inner { transform: scale(0.92) rotate(0deg); }
+html.paint-cursor-enabled .paint-cursor.is-hover.is-down .paint-cursor-inner { transform: scale(0.92) rotate(-6deg); }
+
+/* Over text-entry controls: nudge the gun off the caret */
+html.paint-cursor-enabled .paint-cursor.is-text .paint-cursor-inner { transform: translate(12px, 12px) scale(0.9); }
+
+/* Hide the native cursor only while active; keep a usable caret in text fields */
+html.paint-cursor-enabled,
+html.paint-cursor-enabled * { cursor: none !important; }
+html.paint-cursor-enabled input:not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+html.paint-cursor-enabled textarea,
+html.paint-cursor-enabled [contenteditable="true"] { cursor: text !important; }
+
+/* Belt-and-suspenders: never show under reduced motion even if a class lingers */
+@media (prefers-reduced-motion: reduce) {
+    .paint-cursor { display: none !important; }
+}

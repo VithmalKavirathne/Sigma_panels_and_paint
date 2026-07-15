@@ -130,159 +130,41 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ============================================================
-   Phase 12 - Hero paint-booth effects
-   ============================================================ */
-[data-parallax] { will-change: transform; }
-
-/* Drifting paint particles */
-.paint-particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 1; }
-.paint-particles span {
-    position: absolute; bottom: -12px;
-    width: 7px; height: 7px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(249,92,75,0.85), rgba(249,92,75,0.35) 55%, transparent 72%);
-    opacity: 0;
-    animation: particle-rise var(--dur, 16s) linear infinite;
-    animation-delay: var(--delay, 0s);
-}
-@keyframes particle-rise {
-    0%   { transform: translate(0, 0) scale(0.5); opacity: 0; }
-    12%  { opacity: 0.7; }
-    50%  { opacity: 0.5; }
-    88%  { opacity: 0.3; }
-    100% { transform: translate(var(--drift, 24px), -88vh) scale(1); opacity: 0; }
-}
-
-/* Cursor-reactive paint mist (position driven by JS via --mx/--my) */
-.paint-mist {
-    position: absolute; inset: 0; z-index: 2; pointer-events: none;
-    border-radius: inherit; opacity: 0.85;
-    background: radial-gradient(circle at var(--mx, 50%) var(--my, 42%),
-        rgba(255,255,255,0.45), rgba(249,92,75,0.22) 30%, transparent 60%);
-    transition: opacity 0.6s ease;
-}
-
-/* Clear-coat gloss reflection sweep */
-.gloss-sweep { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; border-radius: inherit; }
-.gloss-sweep::after {
-    content: ''; position: absolute; top: -60%; left: -45%;
-    width: 40%; height: 220%;
-    background: linear-gradient(115deg, transparent, rgba(255,255,255,0.35), transparent);
-    transform: rotate(8deg);
-    animation: gloss-move 6.5s ease-in-out infinite;
-}
-@keyframes gloss-move {
-    0%   { left: -45%; }
-    55%  { left: 130%; }
-    100% { left: 130%; }
-}
+/* (Removed in cleanup: dormant Phase 12 paint-particles / paint-mist /
+   gloss-sweep / spray-gun-cursor and Phase 17 paint-booth demo CSS - their
+   markup (#paint-particles, #paintGun, #paintDemo, ...) no longer exists.) */
 
 /* ============================================================
-   Phase 12 - Spray-gun cursor + nozzle spray
+   Hero car - ONE complete car, transparent-background PNG.
+   Single static <img> (hero-car-transparent.png), object-fit: contain,
+   no container background (no white/grey/cream box), no filters, no masks,
+   no clip-path, no gloss, no stage pills, no ScrollTrigger. The car floats
+   on the hero's cream->white gradient (see .sigma-lux-hero in public.css).
+   Default (no-JS / reduced motion): the complete car shows immediately.
    ============================================================ */
-.paint-gun-cursor {
-    position: absolute; top: 0; left: 0; z-index: 30;
-    width: 66px; height: 66px; pointer-events: none; opacity: 0;
-    transition: opacity 0.2s ease;
-    filter: drop-shadow(0 6px 10px rgba(0,0,0,0.35));
-    will-change: transform;
+.hero-real-car {
+    position: relative;
+    width: min(720px, 55vw);
+    margin-left: auto;
+    z-index: 1;               /* feature card (z-index 4+) stays above */
 }
-.spray-layer { position: absolute; inset: 0; z-index: 19; pointer-events: none; overflow: visible; }
-.spray-layer span {
-    position: absolute; border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,255,255,0.9), rgba(249,92,75,0.5) 55%, transparent 72%);
-    transform: translate(-50%, -50%); opacity: 0;
-    animation-name: spray-burst; animation-timing-function: cubic-bezier(.15,.7,.3,1); animation-fill-mode: forwards;
-}
-@keyframes spray-burst {
-    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
-    18%  { opacity: 0.85; }
-    100% { opacity: 0; transform: translate(calc(-50% + var(--tx, 60px)), calc(-50% + var(--ty, 0px))) scale(1.15); }
-}
-#hero.paint-cursor-active { cursor: none; }
-#hero.paint-cursor-active a,
-#hero.paint-cursor-active button,
-#hero.paint-cursor-active input,
-#hero.paint-cursor-active select,
-#hero.paint-cursor-active textarea { cursor: pointer; }
-
-@media (max-width: 768px) {
-    .paint-gun-cursor, .spray-layer { display: none !important; }
-    #hero.paint-cursor-active { cursor: auto; }
+.hero-real-car img {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
 }
 
-/* ============================================================
-   Phase 17 - Playable paint-booth demo (inside hero car card)
-   ============================================================ */
-.hero-paint-demo {
-    position: absolute; inset: 0; z-index: 4; border-radius: inherit; overflow: hidden;
-    background: radial-gradient(120% 85% at 50% 0%, #2b2723, #131211 72%);
-}
-.booth-glow {
-    position: absolute; top: -12%; left: 50%; transform: translateX(-50%);
-    width: 72%; height: 55%; pointer-events: none;
-    background: radial-gradient(closest-side, rgba(249,92,75,0.20), transparent 70%);
-}
-.car-stage { position: absolute; inset: 0; }
-.car-svg { position: absolute; left: 6%; bottom: 15%; width: 88%; height: auto; }
-
-.demo-gun {
-    position: absolute; top: 8%; left: 6%; width: 32px; height: 32px;
-    transform: translateX(-50%); opacity: 0; transition: opacity 0.3s ease;
-    pointer-events: none; z-index: 3; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
-}
-.hero-paint-demo.spraying .demo-gun { opacity: 1; }
-
-.spray-emit { position: absolute; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
-.spray-emit span {
-    position: absolute; width: 6px; height: 6px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,255,255,0.85), rgba(249,92,75,0.5) 60%, transparent 72%);
-    opacity: 0; animation: spray-fall 0.7s ease-out forwards;
-}
-@keyframes spray-fall {
-    0%   { opacity: 0; transform: translate(0, 0) scale(0.5); }
-    20%  { opacity: 0.85; }
-    100% { opacity: 0; transform: translate(var(--fx, 0), var(--fy, 42px)) scale(1.1); }
+/* Optional single entrance: fade + slide once, no colour/filter change.
+   Applied only when JS confirms it is safe (adds .hero-car-enter). */
+.hero-real-car.hero-car-enter { animation: heroCarEnter 0.7s ease-out both; }
+@keyframes heroCarEnter {
+    from { opacity: 0; transform: translateX(15px); }
+    to   { opacity: 1; transform: translateX(0); }
 }
 
-.clearcoat { position: absolute; inset: 0; pointer-events: none; z-index: 3; overflow: hidden; opacity: 0; }
-.clearcoat::after {
-    content: ''; position: absolute; top: -30%; left: -45%; width: 35%; height: 180%;
-    background: linear-gradient(115deg, transparent, rgba(255,255,255,0.5), transparent);
-    transform: rotate(10deg);
-}
-.hero-paint-demo.clearcoating .clearcoat { opacity: 1; }
-.hero-paint-demo.clearcoating .clearcoat::after { animation: clearcoat-move 1.1s ease-in-out forwards; }
-@keyframes clearcoat-move { from { left: -45%; } to { left: 120%; } }
-
-.demo-stages {
-    position: absolute; top: 12px; left: 0; right: 0; z-index: 5;
-    display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;
-}
-.demo-stages span {
-    font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;
-    color: rgba(246,244,241,0.4); padding: 3px 9px; border-radius: 99px; transition: all 0.3s ease;
-}
-.demo-stages span.active { color: #fff; background: rgba(249,92,75,0.85); }
-
-.demo-progress {
-    position: absolute; bottom: 12px; left: 12px; right: 12px; height: 4px; z-index: 5;
-    background: rgba(255,255,255,0.12); border-radius: 99px; overflow: hidden;
-}
-.demo-progress span { display: block; height: 100%; width: 0; background: var(--coral, #F95C4B); border-radius: 99px; transition: width 0.12s linear; }
-
-.demo-play {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 6;
-    display: inline-flex; align-items: center; gap: 8px;
-    background: var(--coral, #F95C4B); color: #fff; border: none; border-radius: 99px;
-    padding: 12px 22px; font-family: inherit; font-weight: 700; font-size: 13px;
-    letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
-    box-shadow: 0 10px 30px rgba(249,92,75,0.4); transition: transform 0.2s ease, opacity 0.3s ease;
-}
-.demo-play:hover { transform: translate(-50%, -50%) scale(1.05); }
-.demo-play:active { transform: translate(-50%, -50%) scale(0.97); }
-.demo-play .material-symbols-outlined { font-size: 20px; }
-.hero-paint-demo.playing .demo-play { opacity: 0; pointer-events: none; }
+/* (Removed: filter-based paint reveal, gloss sweep, PREP/PAINT/CLEAR/FINISH
+   stage pills, and the hero ScrollTrigger - replaced by this static photo.) */
 
 /* ============================================================
    Reduced motion: respect user preference
@@ -291,11 +173,8 @@
     [data-reveal], [data-reveal="stagger"] > * { opacity: 1 !important; transform: none !important; transition: none !important; }
     .shine-effect::after, .float-anim, .float-anim-delayed, .pulse-icon, .mist-bg { animation: none !important; }
     .scroll-track::after { animation: none !important; }
-    .paint-particles span, .gloss-sweep::after { animation: none !important; }
-    .paint-mist { opacity: 0 !important; }
-    [data-parallax] { translate: none !important; }
-    .paint-gun-cursor, .spray-layer { display: none !important; }
-    #hero.paint-cursor-active { cursor: auto !important; }
-    .spray-emit span, .clearcoat::after { animation: none !important; }
-    .demo-play { display: none !important; }
+
+    /* Hero: show the complete car immediately; no entrance animation */
+    .hero-real-car.hero-car-enter { animation: none !important; }
+    .hero-real-car, .hero-real-car img { opacity: 1 !important; transform: none !important; }
 }

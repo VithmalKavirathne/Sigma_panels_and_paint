@@ -179,6 +179,37 @@ function get_business_settings() {
 }
 
 /**
+ * Retrieves the single-row paint booth video configuration.
+ *
+ * Returns an associative array of the stored settings, or sensible defaults if
+ * the row (or the table) is not present yet. Wrapped in a try/catch so a site
+ * that has not run the phase-video-section migration still renders normally
+ * (the public section simply stays hidden because no path exists).
+ */
+function get_homepage_video() {
+    $defaults = [
+        'paint_video_path'        => null,
+        'paint_video_poster'      => null,
+        'paint_video_enabled'     => 1,
+        'paint_video_autoplay'    => 1,
+        'paint_video_loop'        => 1,
+        'paint_video_eyebrow'     => 'THE SIGMA FINISH',
+        'paint_video_heading'     => 'Precision in Every Layer',
+        'paint_video_description' => 'From preparation and colour matching to clear coat and final polish, every stage is controlled for a clean, durable finish.',
+    ];
+    try {
+        $pdo = db();
+        $row = $pdo->query("SELECT * FROM homepage_video ORDER BY id ASC LIMIT 1")->fetch();
+        if ($row) {
+            return array_merge($defaults, $row);
+        }
+    } catch (Exception $e) {
+        // Table missing / not migrated yet - fall through to defaults.
+    }
+    return $defaults;
+}
+
+/**
  * Formats a date string into a more readable format.
  */
 function format_date($date, $format = 'd M Y') {
