@@ -979,3 +979,79 @@ html.paint-cursor-enabled [contenteditable="true"] { cursor: text !important; }
 @media (prefers-reduced-motion: reduce) {
     .paint-cursor { display: none !important; }
 }
+
+/* ============================================================
+   18. Phase 20 - Mobile hero layout fix (<= 767px only)
+   Single natural-height column in the correct order:
+   eyebrow -> heading -> description -> Get a Quote -> Watch Our Story
+   -> car -> feature card. Nothing absolute except decorations.
+   Fixes: forced 100vh height / empty white space, absolutely-positioned
+   car stage, tiny + pushed-down car (the desktop .hero-top-car rule lives
+   in animations.css which loads AFTER this file, so these mobile rules are
+   scoped under .sigma-lux-hero to out-specify it), and the feature card
+   overlapping the hero controls. Desktop (>= 768px) is left untouched.
+   ============================================================ */
+@media (max-width: 767px) {
+    /* Section: natural height, no forced 100vh gap. Top padding clears the
+       fixed (transparent) header so the heading is never hidden. */
+    .sigma-lux-hero {
+        min-height: auto;
+        height: auto;
+        padding: 88px 20px 40px;
+        overflow: hidden;
+    }
+
+    /* Single column, tight, no min-height, no inner gutter. */
+    .sigma-lux-hero .lux-hero-shell {
+        grid-template-columns: 1fr;
+        min-height: 0;
+        gap: 24px;
+        padding: 0;
+    }
+    .sigma-lux-hero .lux-copy { padding-right: 0; }
+
+    /* Visual column flows normally - no min-height, no absolute stage. */
+    .sigma-lux-hero .lux-hero-visual { min-height: 0; height: auto; }
+    .sigma-lux-hero .lux-car-stage { position: relative; inset: auto; display: block; }
+
+    /* Car (order 6): large, centred, in normal flow. Scoped to beat the
+       desktop .hero-top-car absolute rule defined in animations.css. */
+    .sigma-lux-hero .hero-top-car {
+        position: relative;
+        right: auto;
+        top: auto;
+        transform: none;
+        width: min(100%, 560px);
+        margin: 20px auto 0;
+        z-index: 1;
+    }
+    .sigma-lux-hero .hero-top-car img { width: 100%; height: auto; display: block; object-fit: contain; }
+
+    /* Feature card (order 7): relative, below the car, compact. */
+    .sigma-lux-hero .lux-feature-card {
+        position: relative;
+        right: auto;
+        bottom: auto;
+        top: auto;
+        transform: none;
+        width: 100%;
+        max-width: 100%;
+        margin: 18px auto 0;
+        z-index: 2;
+        padding: 8px;
+    }
+    .sigma-lux-hero .lux-feature-row { padding: 12px 14px; gap: 12px; }
+    .sigma-lux-hero .lux-feature-icon { width: 34px; height: 34px; }
+
+    /* Hide decorative clutter that would add hero height on mobile. */
+    .sigma-lux-hero .lux-ghost,
+    .sigma-lux-hero .lux-hero-visual::before,
+    .sigma-lux-hero .lux-count,
+    .sigma-lux-hero .scroll-rail { display: none; }
+}
+
+/* Stack the two hero actions on the smallest screens. */
+@media (max-width: 480px) {
+    .sigma-lux-hero .lux-actions { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .sigma-lux-hero .lux-actions .btn-coral { width: 100%; justify-content: center; }
+}
