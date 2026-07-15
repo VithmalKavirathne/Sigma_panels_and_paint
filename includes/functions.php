@@ -196,6 +196,10 @@ function get_homepage_video() {
         'paint_video_eyebrow'     => 'THE SIGMA FINISH',
         'paint_video_heading'     => 'Precision in Every Layer',
         'paint_video_description' => 'From preparation and colour matching to clear coat and final polish, every stage is controlled for a clean, durable finish.',
+        'hero_car_path'           => 'assets/images/home/hero-car-transparent-clean.png',
+        'hero_car_enabled'        => 1,
+        'hero_car_alt'            => 'Professionally refinished sports car',
+        'hero_car_updated_at'     => null,
     ];
     try {
         $pdo = db();
@@ -207,6 +211,32 @@ function get_homepage_video() {
         // Table missing / not migrated yet - fall through to defaults.
     }
     return $defaults;
+}
+
+/**
+ * Resolves a stored hero-car image path (web-relative, e.g.
+ * 'uploads/homepage/hero-car/x.png' or the bundled asset) to an absolute
+ * filesystem path and reports whether the file physically exists.
+ */
+function hero_car_file_exists($path) {
+    $path = trim((string) $path);
+    if ($path === '') { return false; }
+    $abs = dirname(__DIR__) . '/' . ltrim($path, '/');
+    return is_file($abs);
+}
+
+/**
+ * Builds the public URL for a hero-car image using the existing asset() helper,
+ * with a cache-busting ?v= based on the file's modification time so Hostinger
+ * and browsers pick up a replacement immediately. No version is hard-coded.
+ */
+function hero_car_url($path) {
+    $path = trim((string) $path);
+    $url  = asset($path);
+    $abs  = dirname(__DIR__) . '/' . ltrim($path, '/');
+    $ver  = is_file($abs) ? filemtime($abs) : null;
+    if ($ver) { $url .= (strpos($url, '?') === false ? '?' : '&') . 'v=' . $ver; }
+    return $url;
 }
 
 /**

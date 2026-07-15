@@ -722,6 +722,16 @@ img { max-width: 100%; display: block; }
 /* Header brand two-line + nav spacing tweaks for the lux look */
 .brand img { max-height: 46px; }
 
+/* No hero car uploaded/enabled: keep the visual column tidy so the hero text
+   stays balanced and there is no giant blank right-hand gap. Drop the empty
+   decorative texts; centre the feature card so it reads as an intentional
+   info panel on desktop (it already stacks normally on mobile). */
+.sigma-lux-hero.no-hero-car .lux-ghost,
+.sigma-lux-hero.no-hero-car .lux-hero-visual::before { display: none; }
+@media (min-width: 1025px) {
+    .sigma-lux-hero.no-hero-car .lux-feature-card { top: 50%; bottom: auto; transform: translateY(-50%); }
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 1024px) {
     .lux-hero-shell { grid-template-columns: 1fr; gap: 40px; min-height: 0; }

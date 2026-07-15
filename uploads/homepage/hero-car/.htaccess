@@ -1,0 +1,6 @@
+Options -Indexes
+
+# Never execute PHP (or other scripts) from the hero-car upload directory.
+<FilesMatch "\.(php|php3|php4|php5|php7|phtml|phar|pht|cgi|pl|py|sh)$">
+    Require all denied
+</FilesMatch>

@@ -163,3 +163,73 @@ function delete_upload_file($webPath) {
     }
     return false;
 }
+
+
+/**
+ * Safely handle an uploaded hero-car image (transparent PNG or WebP).
+ *
+ * Defence in depth: checks upload error, extension (png/webp only), MIME,
+ * real image contents + type via getimagesize(), minimum dimensions, size,
+ * and writes a generated unique filename inside uploads/ (never trusting the
+ * original name, so no path traversal and no executable types can land).
+ *
+ * @return array{path:?string, error:?string, uploaded:bool}
+ */
+function save_hero_image($fileKey, $subdir, $maxBytes = 8388608) { // 8 MB
+    if (empty($_FILES[$fileKey]) || ($_FILES[$fileKey]['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        return ['path' => null, 'error' => null, 'uploaded' => false];
+    }
+    $f = $_FILES[$fileKey];
+    if ($f['error'] !== UPLOAD_ERR_OK) {
+        return ['path' => null, 'error' => 'Image upload failed. Please try again.', 'uploaded' => false];
+    }
+    if ($f['size'] > $maxBytes) {
+        return ['path' => null, 'error' => 'Image too large (max ' . round($maxBytes / 1048576) . 'MB).', 'uploaded' => false];
+    }
+
+    $ext = strtolower(pathinfo($f['name'], PATHINFO_EXTENSION));
+    if (!in_array($ext, ['png', 'webp'], true)) {
+        return ['path' => null, 'error' => 'Invalid file type. Only PNG or WebP images are allowed.', 'uploaded' => false];
+    }
+
+    $mime = '';
+    if (function_exists('finfo_open')) {
+        $fi = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = (string) finfo_file($fi, $f['tmp_name']);
+        finfo_close($fi);
+    }
+    if ($mime !== '' && !in_array($mime, ['image/png', 'image/webp'], true)) {
+        return ['path' => null, 'error' => 'That file does not look like a valid PNG or WebP image.', 'uploaded' => false];
+    }
+
+    // Real image contents + type + dimensions.
+    $info = @getimagesize($f['tmp_name']);
+    if ($info === false) {
+        return ['path' => null, 'error' => 'That file is not a readable image.', 'uploaded' => false];
+    }
+    $okType = ($info[2] === IMAGETYPE_PNG) || (defined('IMAGETYPE_WEBP') && $info[2] === IMAGETYPE_WEBP);
+    if (!$okType) {
+        return ['path' => null, 'error' => 'Only real PNG or WebP images are allowed.', 'uploaded' => false];
+    }
+    $w = (int) $info[0];
+    $h = (int) $info[1];
+    if ($w < 800 || $h < 400) {
+        return ['path' => null, 'error' => 'Image too small. Minimum 800x400px (got ' . $w . 'x' . $h . ').', 'uploaded' => false];
+    }
+
+    $dir = rtrim(UPLOAD_DIR, '/') . '/' . trim($subdir, '/') . '/';
+    if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
+        return ['path' => null, 'error' => 'Could not create the upload folder.', 'uploaded' => false];
+    }
+
+    $base = preg_replace('/[^a-z0-9]+/', '-', strtolower(pathinfo($f['name'], PATHINFO_FILENAME)));
+    $base = trim($base, '-');
+    $base = $base !== '' ? substr($base, 0, 24) : 'hero-car';
+    $filename = $base . '_' . time() . '_' . mt_rand(1000, 9999) . '.' . $ext;
+
+    if (!move_uploaded_file($f['tmp_name'], $dir . $filename)) {
+        return ['path' => null, 'error' => 'Could not save the uploaded image.', 'uploaded' => false];
+    }
+
+    return ['path' => 'uploads/' . trim($subdir, '/') . '/' . $filename, 'error' => null, 'uploaded' => true];
+}

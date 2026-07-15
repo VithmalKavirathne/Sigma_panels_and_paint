@@ -215,6 +215,90 @@ if (is_post() && $action === 'edit') {
     }
 }
 
+
+// ---------------------------------------------------------------
+// Hero Car Image handlers (save / remove)
+// ---------------------------------------------------------------
+if (is_post() && in_array($action, ['hero_save', 'hero_remove'], true)) {
+    if (!validate_csrf_token($_POST['csrf_token'] ?? '')) {
+        $_SESSION['admin_error'] = 'Invalid form submission.';
+        redirect('admin/homepage.php');
+    }
+
+    try {
+        $hv = $pdo->query("SELECT * FROM homepage_video ORDER BY id ASC LIMIT 1")->fetch();
+        if (!$hv) {
+            $pdo->exec("INSERT INTO homepage_video (hero_car_enabled) VALUES (1)");
+            $hv = $pdo->query("SELECT * FROM homepage_video ORDER BY id ASC LIMIT 1")->fetch();
+        }
+    } catch (PDOException $e) {
+        $_SESSION['admin_error'] = 'The homepage settings table is missing. Run database/migrations/phase-hero-car-admin.sql first.';
+        redirect('admin/homepage.php');
+    }
+    $hvId = (int) $hv['id'];
+    $bundledHero = 'assets/images/home/hero-car-transparent-clean.png';
+
+    // ---- Remove hero car (clear DB; delete only an uploaded file, never the bundled asset) ----
+    if ($action === 'hero_remove') {
+        try {
+            $stmt = $pdo->prepare("UPDATE homepage_video SET hero_car_path = NULL, hero_car_updated_at = NOW() WHERE id = :id");
+            $stmt->execute(['id' => $hvId]);
+            $old = (string) ($hv['hero_car_path'] ?? '');
+            if ($old !== '' && $old !== $bundledHero && strpos($old, 'uploads/homepage/hero-car/') === 0) {
+                delete_upload_file($old);
+            }
+            $_SESSION['admin_success'] = 'Hero car image removed.';
+        } catch (PDOException $e) {
+            $_SESSION['admin_error'] = 'Could not remove the hero car image.';
+        }
+        redirect('admin/homepage.php');
+    }
+
+    // ---- Save (alt, enable, optional replacement upload) ----
+    $alt     = trim($_POST['hero_car_alt'] ?? '');
+    $enabled = isset($_POST['hero_car_enabled']) ? 1 : 0;
+    $oldPath = (string) ($hv['hero_car_path'] ?? '');
+    $newPath = $oldPath;
+    $err = '';
+
+    // Optional new image: upload + fully validate BEFORE any DB change/deletion.
+    if (!empty($_FILES['hero_car_file']) && ($_FILES['hero_car_file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+        $res = save_hero_image('hero_car_file', 'homepage/hero-car', 8388608);
+        if ($res['error']) {
+            $err = $res['error'];
+        } elseif ($res['uploaded']) {
+            $newPath = $res['path'];
+        }
+    }
+
+    if ($err) {
+        $_SESSION['admin_error'] = $err;
+        redirect('admin/homepage.php');
+    }
+
+    try {
+        $stmt = $pdo->prepare("UPDATE homepage_video SET hero_car_path = :path, hero_car_alt = :alt, hero_car_enabled = :en, hero_car_updated_at = NOW() WHERE id = :id");
+        $stmt->bindValue(':path', $newPath !== '' ? $newPath : null);
+        $stmt->bindValue(':alt', $alt !== '' ? $alt : null);
+        $stmt->bindValue(':en', $enabled, PDO::PARAM_INT);
+        $stmt->bindValue(':id', $hvId, PDO::PARAM_INT);
+        $stmt->execute();
+        // DB updated: now safe to delete the replaced OLD uploaded file (never the bundled asset).
+        if ($newPath !== $oldPath && $oldPath !== '' && $oldPath !== $bundledHero
+            && strpos($oldPath, 'uploads/homepage/hero-car/') === 0) {
+            delete_upload_file($oldPath);
+        }
+        $_SESSION['admin_success'] = 'Hero car image saved.';
+    } catch (PDOException $e) {
+        // Preserve prior state: discard any just-uploaded new file.
+        if ($newPath !== $oldPath && strpos($newPath, 'uploads/homepage/hero-car/') === 0) {
+            delete_upload_file($newPath);
+        }
+        $_SESSION['admin_error'] = 'Database error saving the hero car image.';
+    }
+    redirect('admin/homepage.php');
+}
+
 // Fetch session messages
 if (isset($_SESSION['admin_success'])) { $success = $_SESSION['admin_success']; unset($_SESSION['admin_success']); }
 if (isset($_SESSION['admin_error'])) { $error = $_SESSION['admin_error']; unset($_SESSION['admin_error']); }
@@ -401,6 +485,87 @@ if (isset($_SESSION['admin_error'])) { $error = $_SESSION['admin_error']; unset(
                 </div>
 
                 <button type="submit" class="btn btn-primary">Save Video Settings</button>
+            </form>
+
+        <?php endif; ?>
+    </div>
+
+
+    <?php
+    // ---- Hero Car Image panel ----
+    $heroReady = true; $hrow = null;
+    try {
+        $hrow = $pdo->query("SELECT * FROM homepage_video ORDER BY id ASC LIMIT 1")->fetch();
+    } catch (PDOException $e) { $heroReady = false; }
+    $hc = array_merge([
+        'hero_car_path'    => 'assets/images/home/hero-car-transparent-clean.png',
+        'hero_car_enabled' => 1,
+        'hero_car_alt'     => 'Professionally refinished sports car',
+    ], is_array($hrow) ? $hrow : []);
+    $hcPath   = trim((string) ($hc['hero_car_path'] ?? ''));
+    $hcAbs    = $hcPath !== '' ? dirname(__DIR__) . '/' . ltrim($hcPath, '/') : '';
+    $hcExists = $hcPath !== '' && is_file($hcAbs);
+    $hcName   = $hcExists ? basename($hcPath) : '';
+    $hcSize   = $hcExists ? filesize($hcAbs) : 0;
+    $hcSizeKB = $hcSize > 0 ? number_format($hcSize / 1024, 0) . ' KB' : '';
+    $hcDim    = '';
+    if ($hcExists) { $gi = @getimagesize($hcAbs); if ($gi) { $hcDim = $gi[0] . ' x ' . $gi[1] . ' px'; } }
+    $hcUrl    = $hcExists ? asset($hcPath) . '?v=' . (@filemtime($hcAbs) ?: time()) : '';
+    ?>
+    <div class="dashboard-card" style="margin-top:24px;">
+        <h2 style="margin-top:0;">Hero Car Image</h2>
+        <p style="color:var(--text-muted);margin-top:-6px;">The transparent car shown on the homepage hero. Transparent PNG or WebP recommended. Disable or remove to hide it from the homepage.</p>
+
+        <?php if (!$heroReady): ?>
+            <div class="alert alert-error">The homepage settings table was not found. Run <code>database/migrations/phase-hero-car-admin.sql</code>.</div>
+        <?php else: ?>
+
+            <div style="margin-bottom:18px;">
+                <?php if ($hcExists): ?>
+                    <p>
+                        <strong>Status:</strong>
+                        <?php if (!empty($hc['hero_car_enabled'])): ?>
+                            <span class="badge badge-success">Enabled</span>
+                        <?php else: ?>
+                            <span class="badge badge-secondary">Disabled</span>
+                        <?php endif; ?>
+                    </p>
+                    <p style="margin:6px 0;"><strong>Current file:</strong> <?= e($hcName) ?><?= $hcSizeKB ? ' (' . e($hcSizeKB) . ')' : '' ?><?= $hcDim ? ' - ' . e($hcDim) : '' ?></p>
+                    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start;">
+                        <div style="padding:10px; border-radius:10px; background:#ffffff; border:1px solid #e5e5e5; text-align:center;">
+                            <img src="<?= e($hcUrl) ?>" alt="Hero car on light background" style="height:120px; display:block;">
+                            <small style="color:#666;">Light</small>
+                        </div>
+                        <div style="padding:10px; border-radius:10px; background:#2a2d33; text-align:center;">
+                            <img src="<?= e($hcUrl) ?>" alt="Hero car on dark background" style="height:120px; display:block;">
+                            <small style="color:#cbd0d8;">Dark</small>
+                        </div>
+                    </div>
+                    <form method="POST" action="<?= e(url('admin/homepage.php?action=hero_remove')) ?>"
+                          onsubmit="return confirm('Remove the current hero car image? This clears it from the homepage.');"
+                          style="margin-top:12px;">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="btn btn-secondary btn-sm">Remove current image</button>
+                    </form>
+                <?php else: ?>
+                    <p style="color:var(--text-muted);">No hero car image uploaded.</p>
+                <?php endif; ?>
+            </div>
+
+            <form method="POST" action="<?= e(url('admin/homepage.php?action=hero_save')) ?>" enctype="multipart/form-data">
+                <?= csrf_field() ?>
+                <div class="form-group">
+                    <label for="hero_car_file"><?= $hcExists ? 'Replace image' : 'Upload image' ?> (PNG or WebP, max 8MB, min 800x400px)</label>
+                    <input type="file" id="hero_car_file" name="hero_car_file" accept="image/png,image/webp,.png,.webp">
+                </div>
+                <div class="form-group">
+                    <label for="hero_car_alt">Alt text</label>
+                    <input type="text" id="hero_car_alt" name="hero_car_alt" value="<?= e($hc['hero_car_alt']) ?>">
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label><input type="checkbox" name="hero_car_enabled" value="1" <?= !empty($hc['hero_car_enabled']) ? 'checked' : '' ?>> Enabled (show on homepage)</label>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Hero Car</button>
             </form>
 
         <?php endif; ?>

@@ -7,6 +7,13 @@ require_once __DIR__ . '/../includes/header.php';
 
 $pdo = db();
 
+// --- Hero car (admin-managed via homepage settings) ---
+$homepage    = get_homepage_video();
+$heroCarPath = trim((string) ($homepage['hero_car_path'] ?? ''));
+$showHeroCar = !empty($homepage['hero_car_enabled'])
+            && $heroCarPath !== ''
+            && hero_car_file_exists($heroCarPath);
+
 // --- Homepage content sections ---
 $sections = $pdo->query("SELECT * FROM homepage_sections WHERE is_active = 1 ORDER BY sort_order ASC, id ASC")->fetchAll();
 $hero = null;
@@ -43,7 +50,7 @@ $heroBody = $hero['content'] ?? 'Panel beating, spray painting, insurance repair
 $luxTitle = $heroTitle ?: 'Precision is our starting line';
 $luxBody  = $heroBody ?: 'Sigma Panels & Paint delivers flawless repairs with factory precision and a finish that exceeds expectations.';
 ?>
-<section class="sigma-lux-hero" id="hero">
+<section class="sigma-lux-hero<?= $showHeroCar ? '' : ' no-hero-car' ?>" id="hero">
     <div class="lux-split" aria-hidden="true"></div>
 
     <div class="lux-hero-shell">
@@ -61,13 +68,13 @@ $luxBody  = $heroBody ?: 'Sigma Panels & Paint delivers flawless repairs with fa
         <div class="lux-hero-visual" data-reveal="fade">
             <div class="lux-ghost" aria-hidden="true"><span>CRAFTED</span></div>
             <div class="lux-car-stage">
+                <?php if ($showHeroCar): ?>
                 <div class="hero-top-car" data-hero-car>
                     <img
-                        src="<?= e(asset('assets/images/home/hero-car-transparent-clean.png')) ?>?v=20260715-2"
-                        width="936"
-                        height="433"
-                        alt="Professionally refinished sports car">
+                        src="<?= e(hero_car_url($heroCarPath)) ?>"
+                        alt="<?= e($homepage['hero_car_alt'] ?? 'Professionally refinished sports car') ?>">
                 </div>
+                <?php endif; ?>
             </div>
 
             <div class="lux-feature-card" data-reveal="fade">
