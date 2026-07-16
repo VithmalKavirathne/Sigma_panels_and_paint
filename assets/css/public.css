@@ -1055,3 +1055,38 @@ html.paint-cursor-enabled [contenteditable="true"] { cursor: text !important; }
     .sigma-lux-hero .lux-actions { flex-direction: column; align-items: flex-start; gap: 16px; }
     .sigma-lux-hero .lux-actions .btn-coral { width: 100%; justify-content: center; }
 }
+
+
+/* ============================================================
+   19. Phase 21 - Large-desktop hero refinement (>= 1601px only)
+   On very wide monitors the hero was too airy: content spanned wide,
+   the section was forced to 100vh, and the car sat too low/far. This
+   caps the content width, limits the height, enlarges + lifts the car,
+   and pulls the text and car closer. Standard desktop, tablet, and
+   mobile (<= 1600px) are left completely untouched. Scoped under
+   .sigma-lux-hero so the .hero-top-car rule out-specifies the desktop
+   rule in animations.css (which loads after this file).
+   ============================================================ */
+@media (min-width: 1601px) {
+    /* Keep the hero from becoming excessively tall. */
+    .sigma-lux-hero {
+        min-height: min(820px, calc(100vh - 90px));
+    }
+    /* Cap + centre the hero content; stop the inner grid forcing height. */
+    .sigma-lux-hero .lux-hero-shell {
+        max-width: 1500px;
+        margin-inline: auto;
+        min-height: min(700px, calc(100vh - 200px));
+    }
+    /* Text column stays a comfortable 520-620px and closer to the car. */
+    .sigma-lux-hero .lux-copy {
+        max-width: 600px;
+    }
+    /* Car: slightly larger, lifted and pulled inward. Position/transform
+       (absolute + translateY(-50%)) are inherited from animations.css. */
+    .sigma-lux-hero .hero-top-car {
+        width: min(720px, 43vw);
+        right: 6%;
+        top: 50%;
+    }
+}
