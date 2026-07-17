@@ -41,7 +41,13 @@ $adminPageKey = isset($adminPageKey) ? $adminPageKey : 'dashboard';
                     <li><a href="<?= e(url('admin/messages.php')) ?>" class="<?= active_class('messages', $adminPageKey) ?>">Messages</a></li>
                     <li><a href="<?= e(url('admin/seo-basic.php')) ?>" class="<?= active_class('seo', $adminPageKey) ?>">SEO &amp; Site Icons</a></li>
                     <li><a href="<?= e(url('admin/settings-basic.php')) ?>" class="<?= active_class('settings', $adminPageKey) ?>">Settings</a></li>
-                    <li><a href="<?= e(url('admin/logout.php')) ?>" class="logout-btn">Logout</a></li>
+                    <li><a href="<?= e(url('admin/change-password.php')) ?>" class="<?= active_class('change-password', $adminPageKey) ?>">Change Password</a></li>
+                    <li>
+                        <form method="post" action="<?= e(url('admin/logout.php')) ?>" class="logout-form" style="margin:0;">
+                            <?= csrf_field() ?>
+                            <button type="submit" class="logout-btn" style="background:none;border:0;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit;padding:0;">Logout</button>
+                        </form>
+                    </li>
                 </ul>
             </nav>
         </aside>
