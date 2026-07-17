@@ -54,3 +54,5 @@ uploads/*
 !uploads/index.html
 !uploads/*/
 !uploads/*/.gitkeep
+
+SIGMA_HOSTINGER_GIT_UPLOAD.zip
