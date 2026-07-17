@@ -1,6 +1,56 @@
-# Sigma Panels & Paint - clean URL routing + security
+# Sigma Panels & Paint - clean URL routing + security hardening
 Options -Indexes
+
+# ===============================================================
+# Security: block sensitive paths from web access (defense in depth).
+# Layer 1: mod_rewrite [F] (403) early, before the real-file passthrough.
+# Layer 2: <FilesMatch> Require all denied. Never rely on one directive.
+# ===============================================================
 RewriteEngine On
+
+# Version-control metadata (source + history + any historical secrets)
+RewriteRule (?i)(^|/)\.(git|svn|hg|bzr)(/|$)            - [F]
+# Private / dev / data directories that must never be web-served
+RewriteRule (?i)^(database|tests|tests-e2e|docs|references|screenshots|node_modules|stitch_[^/]*|_security_backup[^/]*|backups?)(/|$) - [F]
+# Sensitive file extensions anywhere in the tree
+RewriteRule (?i)\.(sql|bak|backup|old|copy|orig|log|env|ini|sh|bat|ps1|psd|zip|tar|gz|7z|rar|pem|key|crt|lock|dist)$ - [F]
+
+# Belt-and-braces at the file level (covers servers that skip the rules above)
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+<FilesMatch "(?i)\.(sql|bak|backup|old|copy|orig|log|env|ini|sh|bat|ps1|psd|zip|tar|gz|7z|rar|pem|key|crt|lock|dist)$">
+    Require all denied
+</FilesMatch>
+
+# ===============================================================
+# Safe security response headers (non-breaking). Applied site-wide.
+# CSP is intentionally NOT enforced here - see the Report-Only starter
+# below; inventory origins and tighten per Phase 12 before enforcing.
+# ===============================================================
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=(), fullscreen=(self)"
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+
+    # --- Enable ONLY after confirming HTTPS on every page (Phase 13) ---
+    # Header always set Strict-Transport-Security "max-age=86400"
+
+    # --- CSP rollout: start Report-Only, verify Google Maps / local GSAP+Lenis /
+    #     uploaded MP4 / admin still work, then switch to enforcing (Phase 12) ---
+    # Header always set Content-Security-Policy-Report-Only "default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data: https:; media-src 'self'; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self'; frame-src https://www.google.com https://maps.google.com; frame-ancestors 'self'"
+</IfModule>
+
+# ===============================================================
+# Canonical HTTPS redirect - LEAVE COMMENTED until verified on Hostinger
+# (the host already serves HTTPS; an untested redirect can loop behind the
+# proxy). Do not trust an arbitrary Host header when you enable this.
+# ===============================================================
+# RewriteCond %{HTTPS} !=on
+# RewriteCond %{HTTP:X-Forwarded-Proto} !https
+# RewriteRule ^ https://sigmapanelsandpaint.com.au%{REQUEST_URI} [R=301,L]
 
 # Never rewrite real files or directories (assets, uploads, and existing
 # .php files like /public/about.php and /admin/login.php keep working).
@@ -38,11 +88,3 @@ RewriteRule ^admin/messages/?$      admin/messages.php        [QSA,L]
 RewriteRule ^admin/seo-basic/?$     admin/seo-basic.php       [QSA,L]
 RewriteRule ^admin/settings-basic/?$ admin/settings-basic.php [QSA,L]
 RewriteRule ^admin/faqs/?$          admin/faqs.php            [QSA,L]
-
-# ---- Security ----
-<FilesMatch "^\.">
-    Require all denied
-</FilesMatch>
-<FilesMatch "\.(sql|bak|backup|log|env|ini|sh|bat|ps1|md)$">
-    Require all denied
-</FilesMatch>

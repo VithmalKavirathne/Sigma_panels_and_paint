@@ -19,10 +19,11 @@
 $sigmaPrivateConfig = dirname(__DIR__, 2) . '/sigma_private/config.php';
 
 if (!is_file($sigmaPrivateConfig)) {
+    // Fail closed WITHOUT revealing the expected server path publicly.
+    error_log('[sigma] private configuration file is missing; see deployment docs.');
     http_response_code(500);
-    exit('Configuration error: sigma_private/config.php was not found '
-        . 'one level above public_html. Copy the template there and add '
-        . 'your real database credentials.');
+    header('Content-Type: text/plain; charset=UTF-8');
+    exit('Service temporarily unavailable. Please try again later.');
 }
 
 // Loads: DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS, BASE_URL
