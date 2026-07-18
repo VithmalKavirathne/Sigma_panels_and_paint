@@ -1,0 +1,11 @@
+
+SECURITY DATABASE MIGRATION
+Before deploying hardened admin authentication:
+
+1. Back up the production database.
+2. Import database/migrations/phase-security-hardening.sql through Hostinger phpMyAdmin.
+3. Verify admins.auth_version and admins.password_changed_at exist.
+4. Verify login_attempts and security_log exist.
+5. Previous admin sessions may be invalidated after the migration.
+
+Git deployment does not automatically update the MySQL database.
